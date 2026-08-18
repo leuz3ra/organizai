@@ -1,0 +1,312 @@
+<ion-content [fullscreen]="true">
+
+  <!-- TOPO -->
+  <div class="topo">
+
+    <div class="logo-area">
+      <img src="assets/icon.png" alt="">
+      <h1>OrganizAí</h1>
+    </div>
+
+    <div class="icones">
+      <ion-icon
+        name="log-out-outline"
+        class="logout"
+        (click)="logout()">
+      </ion-icon>
+    </div>
+
+  </div>
+
+  <!-- BOAS VINDAS -->
+  <div class="boas-vindas">
+
+    <h2>{{ saudacao }}</h2>
+
+    <p>
+      Controle hoje, conquiste liberdade amanhã.
+    </p>
+
+  </div>
+
+  <!-- CONVERSOR -->
+
+<div class="secao">
+
+  <h3>Conversor de Moeda</h3>
+
+  <div class="linha-conversor">
+
+  <div
+    class="seletor-esquerda"
+    (click)="selectOrigem.open()"
+    [style.background]="getCorMoeda(moedaOrigem)">
+
+    <img
+      class="bandeira-img"
+      [src]="getImagemMoeda(moedaOrigem)"
+      alt="">
+
+    <span>
+      {{ moedaOrigem }}
+    </span>
+
+  </div>
+
+<ion-select
+  #selectOrigem
+  interface="action-sheet"
+  [(ngModel)]="moedaOrigem"
+  (ionChange)="converterBRL()"
+  style="display:none;">
+
+  <ion-select-option
+    *ngFor="let moeda of moedas"
+    [value]="moeda.codigo">
+
+    {{ moeda.codigo }} {{ moeda.bandeira }}
+
+  </ion-select-option>
+
+</ion-select>
+
+    <ion-icon
+      name="swap-horizontal"
+      class="trocar-moeda"
+      (click)="inverterMoedas()">
+    </ion-icon>
+
+  <div
+    class="seletor-direita"
+    (click)="selectDestino.open()"
+    [style.background]="getCorMoeda(moedaDestino)">
+
+    <img
+      class="bandeira-img"
+      [src]="getImagemMoeda(moedaDestino)"
+      alt="">
+
+    <span>
+      {{ moedaDestino }}
+    </span>
+
+  </div>
+
+<ion-select
+  #selectDestino
+  interface="action-sheet"
+  [(ngModel)]="moedaDestino"
+  (ionChange)="converterBRL()"
+  style="display:none;">
+
+  <ion-select-option
+    *ngFor="let moeda of moedas"
+    [value]="moeda.codigo">
+
+    {{ moeda.codigo }} {{ moeda.bandeira }}
+
+  </ion-select-option>
+
+</ion-select>
+
+  </div>
+
+  <div class="linha-inputs">
+
+    <input
+      type="number"
+      class="campo-moeda"
+      [(ngModel)]="valorBRL"
+      (input)="converterBRL()">
+
+    <input
+      type="number"
+      class="campo-moeda"
+      [value]="valorUSD"
+      readonly>
+
+  </div>
+
+</div>
+
+  <!-- CALCULADORA -->
+  <div class="secao">
+
+  <h3>Calculadora Percentual</h3>
+
+  <div class="calc">
+
+    <div class="esquerda">
+
+      <div class="campo-calculo">
+
+      <div class="prefixo">R$</div>
+
+      <input
+      type="number"
+      placeholder="Digite um valor"
+      [(ngModel)]="valorInicial">
+
+    </div>
+
+    <div class="campo-calculo">
+
+      <div class="prefixo">%</div>
+
+      <input
+      type="number"
+      placeholder="Digite a porcentagem"
+      [(ngModel)]="percentual">
+
+    </div>
+
+    </div>
+
+    <ion-icon
+      class="seta"
+      name="arrow-forward">
+    </ion-icon>
+
+    <div class="campo-calculo resultado">
+
+      <div class="prefixo">R$</div>
+
+      <ion-input
+        [value]="resultado"
+        readonly>
+      </ion-input>
+
+    </div>
+
+  </div>
+
+  <div class="botoes-percentual">
+
+  <ion-button
+    class="btn-adicionar"
+    (click)="adicionarPercentual()">
+
+    Adicionar
+
+  </ion-button>
+
+  <ion-button
+    class="btn-tirar"
+    (click)="tirarPercentual()">
+
+    Tirar
+
+  </ion-button>
+
+</div>
+
+</div>
+
+  <!-- CARDS -->
+  <div class="cards">
+
+    <div class="card" (click)="abrirRendas()">
+
+      <ion-icon
+        name="wallet-outline"
+        class="icone-card">
+      </ion-icon>
+
+      <h4>Rendas</h4>
+
+      <p>
+        Veja aqui suas rendas ao longo dos dias.
+      </p>  
+
+    </div>
+
+    <div class="card" (click)="abrirMetas()">
+
+      <ion-icon
+        name="flag-outline"
+        class="icone-card">
+      </ion-icon>
+
+      <h4>Metas</h4>
+
+      <p>
+        Quais seus planos?
+      </p>
+
+    </div>
+
+    <div class="card" (click)="abrirPagamentos()">
+
+      <ion-icon
+        name="card-outline"
+        class="icone-card">
+      </ion-icon>
+
+      <h4>Pagamentos</h4>
+
+      <p>
+        Analise boletos, contas e dívidas.
+      </p>
+
+    </div>
+
+    <div class="card" (click)="abrirDicas()">
+
+      <ion-icon
+        name="bulb-outline"
+        class="icone-card">
+      </ion-icon>
+
+      <h4>Dicas</h4>
+
+      <p>
+        Busque por dicas sobre o tema.
+      </p>
+
+    </div>
+
+  </div>
+
+  <div
+  class="overlay-logout"
+  *ngIf="mostrarLogout">
+
+  <div class="modal-logout">
+
+    <ion-icon
+      name="log-out-outline"
+      class="logout-modal-icon">
+    </ion-icon>
+
+    <h2>Sair da conta?</h2>
+
+    <p>
+      Você precisará fazer login novamente.
+    </p>
+
+    <div class="acoes-logout">
+
+      <ion-button
+        class="btn-cancelar"
+        fill="clear"
+        (click)="cancelarLogout()">
+
+        Cancelar
+
+      </ion-button>
+
+      <ion-button
+        class="btn-sair-modal"
+        (click)="confirmarLogout()">
+
+        Sair
+
+      </ion-button>
+
+    </div>
+
+  </div>
+
+</div>
+
+</ion-content>

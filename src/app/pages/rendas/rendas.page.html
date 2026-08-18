@@ -1,0 +1,432 @@
+<ion-content>
+
+  <!-- ================================================= -->
+  <!-- TOPO -->
+  <!-- ================================================= -->
+
+  <div class="topo">
+
+    <div class="logo-area">
+
+      <img
+        src="assets/icon.png"
+        alt="OrganizAí">
+
+      <h1>
+        OrganizAí
+      </h1>
+
+    </div>
+
+
+    <ion-icon
+      name="arrow-back-outline"
+      class="voltar"
+      (click)="voltar()">
+    </ion-icon>
+
+  </div>
+
+
+  <!-- ================================================= -->
+  <!-- LOADING PRINCIPAL -->
+  <!-- ================================================= -->
+
+  <div
+    class="loading-container"
+    *ngIf="carregando">
+
+    <div class="loading-logo">
+
+      <img
+        src="assets/icon.png"
+        alt="Carregando">
+
+    </div>
+
+
+    <div class="loading-pulse">
+
+      <span></span>
+      <span></span>
+      <span></span>
+
+    </div>
+
+
+    <h3>
+      OrganizAí
+    </h3>
+
+
+    <p>
+      Organizando seus investimentos...
+    </p>
+
+  </div>
+
+
+  <!-- ================================================= -->
+  <!-- CONTEÚDO -->
+  <!-- ================================================= -->
+
+  <ng-container
+    *ngIf="!carregando">
+
+
+    <!-- =============================================== -->
+    <!-- CABEÇALHO -->
+    <!-- =============================================== -->
+
+    <div class="cabecalho-rendas">
+
+      <h2>
+        Meus Investimentos
+      </h2>
+
+
+      <p>
+        Acompanhe suas simulações financeiras
+      </p>
+
+
+      <div class="total-rendas">
+
+        <span>
+          Total simulado
+        </span>
+
+
+        <strong>
+
+          R$
+          {{
+            total
+            | number:'1.2-2':'pt-BR'
+          }}
+
+        </strong>
+
+      </div>
+
+    </div>
+
+
+    <!-- =============================================== -->
+    <!-- NOVO INVESTIMENTO -->
+    <!-- =============================================== -->
+
+    <div
+      class="novo-investimento"
+      [class.desabilitado]="navegandoNovo"
+      (click)="novoInvestimento()">
+
+
+      <div
+        class="novo-icone"
+        *ngIf="!navegandoNovo">
+
+        <ion-icon
+          name="add-outline">
+        </ion-icon>
+
+      </div>
+
+
+      <div
+        class="spinner-pequeno"
+        *ngIf="navegandoNovo">
+      </div>
+
+
+      <span>
+
+        {{
+          navegandoNovo
+            ? 'Abrindo...'
+            : 'Novo Investimento'
+        }}
+
+      </span>
+
+    </div>
+
+
+    <!-- =============================================== -->
+    <!-- ERRO -->
+    <!-- =============================================== -->
+
+    <div
+      class="estado erro"
+      *ngIf="erro">
+
+
+      <div class="erro-icone">
+
+        !
+
+      </div>
+
+
+      <h3>
+        Não foi possível carregar
+      </h3>
+
+
+      <p>
+        {{ erro }}
+      </p>
+
+
+      <button
+        type="button"
+        (click)="tentarNovamente()">
+
+        <ion-icon
+          name="refresh-outline">
+        </ion-icon>
+
+        Tentar novamente
+
+      </button>
+
+    </div>
+
+
+    <!-- =============================================== -->
+    <!-- LISTA -->
+    <!-- =============================================== -->
+
+    <div
+      class="lista-rendas"
+      *ngIf="!erro">
+
+
+      <!-- ============================================= -->
+      <!-- CARDS -->
+      <!-- ============================================= -->
+
+      <div
+        class="renda-card"
+        *ngFor="let renda of rendas; trackBy: trackById">
+
+
+        <!-- =========================================== -->
+        <!-- TOPO DO CARD -->
+        <!-- =========================================== -->
+
+        <div class="card-topo">
+
+
+          <div>
+
+            <h3>
+              {{ renda.titulo }}
+            </h3>
+
+
+            <span class="tipo">
+
+              {{ renda.tipo_investimento }}
+
+            </span>
+
+          </div>
+
+
+          <span class="data">
+
+            {{
+              renda.data_recebimento
+              | date:'dd/MM/yyyy'
+            }}
+
+          </span>
+
+        </div>
+
+
+        <!-- =========================================== -->
+        <!-- SALDO -->
+        <!-- =========================================== -->
+
+        <div class="saldo">
+
+          <span>
+            Saldo atual
+          </span>
+
+
+          <strong>
+
+            R$
+            {{
+              renda.saldo_atual
+              | number:'1.2-2':'pt-BR'
+            }}
+
+          </strong>
+
+        </div>
+
+
+        <!-- =========================================== -->
+        <!-- RENDIMENTO -->
+        <!-- =========================================== -->
+
+        <div class="rendimento">
+
+          <span>
+            Rendimento simulado
+          </span>
+
+
+          <strong>
+
+            + R$
+            {{
+              renda.rendimento
+              | number:'1.2-2':'pt-BR'
+            }}
+
+          </strong>
+
+        </div>
+
+
+        <!-- =========================================== -->
+        <!-- RENTABILIDADE -->
+        <!-- =========================================== -->
+
+        <div class="percentual">
+
+          <span>
+            Rentabilidade anual
+          </span>
+
+
+          <strong>
+
+            {{
+              renda.percentual_rendimento
+              | number:'1.2-2':'pt-BR'
+            }}%
+
+          </strong>
+
+        </div>
+
+
+        <!-- =========================================== -->
+        <!-- VALOR INVESTIDO -->
+        <!-- =========================================== -->
+
+        <div class="valor-inicial">
+
+          <span>
+            Valor investido
+          </span>
+
+
+          <strong>
+
+            R$
+            {{
+              renda.valor_investido
+              | number:'1.2-2':'pt-BR'
+            }}
+
+          </strong>
+
+        </div>
+
+
+        <!-- =========================================== -->
+        <!-- EXCLUIR -->
+        <!-- =========================================== -->
+
+        <div class="acoes-investimento">
+
+
+          <button
+            type="button"
+            class="botao-excluir"
+            [disabled]="excluindoId === renda.id"
+            (click)="excluirInvestimento(renda.id!)">
+
+
+            <div
+              class="spinner-pequeno vermelho"
+              *ngIf="excluindoId === renda.id">
+            </div>
+
+
+            <ion-icon
+              name="trash-outline"
+              *ngIf="excluindoId !== renda.id">
+            </ion-icon>
+
+
+            <span>
+
+              {{
+                excluindoId === renda.id
+                  ? 'Excluindo...'
+                  : 'Excluir'
+              }}
+
+            </span>
+
+          </button>
+
+        </div>
+
+
+      </div>
+
+
+      <!-- ============================================= -->
+      <!-- NENHUM INVESTIMENTO -->
+      <!-- ============================================= -->
+
+      <div
+        class="sem-rendas"
+        *ngIf="rendas.length === 0">
+
+
+        <div class="icone-vazio">
+
+          <ion-icon
+            name="add-outline">
+          </ion-icon>
+
+        </div>
+
+
+        <h3>
+          Nenhum investimento ainda
+        </h3>
+
+
+        <p>
+          Comece adicionando seu primeiro
+          investimento simulado.
+        </p>
+
+
+        <button
+          type="button"
+          (click)="novoInvestimento()">
+
+          Adicionar investimento
+
+        </button>
+
+      </div>
+
+
+    </div>
+
+  </ng-container>
+
+</ion-content>

@@ -1,0 +1,95 @@
+<ion-content [fullscreen]="true">
+
+  <div class="cadastro-container">
+
+    <div class="logo-area">
+
+      <h1>OrganizAí</h1>
+
+      <p>
+        Crie sua conta e comece a organizar
+        sua vida financeira.
+      </p>
+
+    </div>
+
+    <div class="cadastro-card">
+
+      <h2>Criar conta</h2>
+
+      <ion-input
+        label="Nome"
+        label-placement="floating"
+        fill="outline"
+        type="text"
+        [(ngModel)]="nome"
+        placeholder="Digite seu nome">
+      </ion-input>
+
+      <ion-input
+        label="E-mail"
+        label-placement="floating"
+        fill="outline"
+        type="email"
+        [(ngModel)]="email"
+        placeholder="seu@email.com">
+      </ion-input>
+
+      <ion-input
+        label="Senha"
+        label-placement="floating"
+        fill="outline"
+        type="password"
+        [(ngModel)]="senha"
+        placeholder="Digite sua senha">
+      </ion-input>
+
+      <ion-input
+        label="Confirmar senha"
+        label-placement="floating"
+        fill="outline"
+        type="password"
+        [(ngModel)]="confirmarSenha"
+        placeholder="Digite a senha novamente">
+      </ion-input>
+
+      <div
+        class="erro"
+        *ngIf="erro">
+        {{ erro }}
+      </div>
+
+      <div
+        class="sucesso"
+        *ngIf="sucesso">
+        {{ sucesso }}
+      </div>
+
+      <ion-button
+        expand="block"
+        (click)="cadastrar()"
+        [disabled]="carregando">
+
+        {{ carregando ? 'Criando conta...' : 'Criar conta' }}
+
+      </ion-button>
+
+      <div class="login-link">
+
+        <span>Já possui uma conta?</span>
+
+        <button
+          type="button"
+          (click)="voltarParaLogin()">
+
+          Entrar
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</ion-content>

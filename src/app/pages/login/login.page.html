@@ -1,0 +1,65 @@
+<ion-content [fullscreen]="true">
+
+  <div class="login-container">
+
+    <div class="logo-area">
+      <h1>OrganizAí</h1>
+      <p>Organize sua vida financeira</p>
+    </div>
+
+    <div class="login-card">
+
+      <h2>Entrar</h2>
+
+      <ion-input
+        label="E-mail"
+        label-placement="floating"
+        fill="outline"
+        type="email"
+        [(ngModel)]="email"
+        placeholder="seu@email.com">
+      </ion-input>
+
+      <ion-input
+        label="Senha"
+        label-placement="floating"
+        fill="outline"
+        type="password"
+        [(ngModel)]="senha"
+        placeholder="Digite sua senha">
+      </ion-input>
+
+      <div
+        class="erro"
+        *ngIf="erro">
+        {{ erro }}
+      </div>
+
+      <ion-button
+        expand="block"
+        (click)="entrar()"
+        [disabled]="carregando">
+
+        {{ carregando ? 'Entrando...' : 'Entrar' }}
+
+      </ion-button>
+
+      <div class="cadastro-link">
+
+        <span>Ainda não possui uma conta?</span>
+
+        <button
+          type="button"
+          (click)="irParaCadastro()">
+
+          Criar conta
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</ion-content>
