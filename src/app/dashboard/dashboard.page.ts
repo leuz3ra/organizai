@@ -231,7 +231,7 @@ tirarPercentual() {
   }
 
   abrirMetas() {
-    alert('Tela de Metas em desenvolvimento.');
+    this.router.navigate(['/metas']);
   }
 
   abrirPagamentos() {

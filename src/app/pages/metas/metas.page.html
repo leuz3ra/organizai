@@ -1,0 +1,364 @@
+<ion-content>
+
+  <!-- TOPO -->
+  <div class="topo">
+
+    <div class="logo-area">
+      <img src="assets/icon.png" alt="OrganizAí">
+      <h1>OrganizAí</h1>
+    </div>
+
+    <ion-icon
+      name="arrow-back-outline"
+      class="voltar"
+      (click)="voltar()">
+    </ion-icon>
+
+  </div>
+
+
+  <!-- LOADING -->
+  <div class="loading-container" *ngIf="carregandoMetas">
+
+    <div class="loading-logo">
+      <img src="assets/icon.png" alt="Carregando">
+    </div>
+
+    <div class="loading-pulse">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+
+    <h3>OrganizAí</h3>
+
+    <p>Carregando suas metas...</p>
+
+  </div>
+
+
+  <!-- CONTEÚDO -->
+  <ng-container *ngIf="!carregandoMetas">
+
+    <!-- CABEÇALHO -->
+    <div class="cabecalho-metas">
+
+      <h2>Minhas Metas</h2>
+
+      <p>Acompanhe seu progresso mês a mês</p>
+
+    </div>
+
+
+    <!-- BOTÃO NOVA META -->
+    <div
+      class="nova-meta-btn"
+      (click)="abrirModal()">
+
+      <ion-icon name="add-outline"></ion-icon>
+
+      <span>Nova Meta</span>
+
+    </div>
+
+
+    <!-- LISTA DE METAS -->
+    <div class="lista-metas">
+
+
+      <!-- ESTADO VAZIO -->
+      <div class="sem-metas" *ngIf="metas.length === 0">
+
+        <div class="icone-vazio">🎯</div>
+
+        <h3>Nenhuma meta ainda</h3>
+
+        <p>
+          Crie sua primeira meta e marque cada mês conforme for avançando!
+        </p>
+
+        <button type="button" (click)="abrirModal()">
+          Criar primeira meta
+        </button>
+
+      </div>
+
+
+      <!-- CARDS DE METAS -->
+      <div
+        class="meta-card"
+        *ngFor="let meta of metas"
+        [class.card-concluida]="isMetaConcluida(meta)">
+
+
+        <!-- CABEÇALHO DO CARD -->
+        <div
+          class="card-topo"
+          (click)="toggleExpandir(meta)">
+
+          <div class="card-topo-info">
+
+            <div class="card-titulo-linha">
+              <span class="icone-concluida" *ngIf="isMetaConcluida(meta)">🏆</span>
+              <h3>{{ meta.titulo }}</h3>
+            </div>
+
+            <p class="card-descricao" *ngIf="meta.descricao">
+              {{ meta.descricao }}
+            </p>
+
+            <div class="card-chips">
+
+              <span class="chip chip-valor">
+                {{ formatarMoeda(meta.valor_total) }}
+              </span>
+
+              <span class="chip chip-meses">
+                {{ meta.total_periodos }} meses
+              </span>
+
+              <span class="chip chip-parcela">
+                {{ formatarMoeda(meta.valor_por_periodo) }}/mês
+              </span>
+
+            </div>
+
+          </div>
+
+          <div class="card-topo-acoes">
+
+            <button
+              class="btn-excluir"
+              (click)="confirmarExclusao(meta.id!, $event)">
+              <ion-icon name="trash-outline"></ion-icon>
+            </button>
+
+            <ion-icon
+              name="chevron-down-outline"
+              class="seta"
+              [class.seta-aberta]="meta.expandida">
+            </ion-icon>
+
+          </div>
+
+        </div>
+
+
+        <!-- CONTEÚDO EXPANDIDO -->
+        <div class="card-conteudo" *ngIf="meta.expandida">
+
+          <!-- CARREGANDO -->
+          <div class="blocos-loading" *ngIf="meta.carregando">
+            <div class="spinner-pequeno"></div>
+            <span>Carregando...</span>
+          </div>
+
+
+          <ng-container *ngIf="!meta.carregando">
+
+            <!-- BARRA DE PROGRESSO -->
+            <div class="progresso-wrap">
+
+              <div class="progresso-header">
+                <span>Progresso</span>
+                <strong [class.verde]="isMetaConcluida(meta)">
+                  {{ getProgressoPorcentagem(meta) }}%
+                </strong>
+              </div>
+
+              <div class="barra">
+                <div
+                  class="barra-fill"
+                  [style.width.%]="getProgressoPorcentagem(meta)"
+                  [class.barra-concluida]="isMetaConcluida(meta)">
+                </div>
+              </div>
+
+              <div class="progresso-footer">
+                <span>{{ formatarMoeda(getTotalArrecadado(meta)) }} arrecadados</span>
+                <span>de {{ formatarMoeda(meta.valor_total) }}</span>
+              </div>
+
+            </div>
+
+
+            <!-- BADGE CONCLUÍDA -->
+            <div class="badge-concluida" *ngIf="isMetaConcluida(meta)">
+              🏆 Meta concluída! Parabéns!
+            </div>
+
+
+            <!-- INSTRUÇÃO -->
+            <p class="instrucao-blocos">
+              Toque em um bloco para marcar o mês como pago
+            </p>
+
+
+            <!-- GRID DE BLOCOS -->
+            <div class="grid-blocos" [class.grid-grande]="meta.total_periodos > 60">
+
+              <button
+                class="bloco"
+                *ngFor="let periodo of getArrayPeriodos(meta.total_periodos)"
+                [class.bloco-pago]="getBlocoPago(meta, periodo)"
+                (click)="toggleBloco(meta, periodo)">
+
+                <span class="bloco-num">{{ periodo }}</span>
+
+                <ion-icon
+                  name="checkmark-outline"
+                  class="bloco-check"
+                  *ngIf="getBlocoPago(meta, periodo)">
+                </ion-icon>
+
+              </button>
+
+            </div>
+
+          </ng-container>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </ng-container>
+
+
+  <!-- MODAL NOVA META -->
+  <div
+    class="overlay"
+    *ngIf="mostrarModal"
+    (click)="fecharModal()">
+
+    <div class="modal" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+
+        <h2>Nova Meta</h2>
+
+        <button class="btn-fechar" (click)="fecharModal()">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+
+      </div>
+
+      <div class="modal-body">
+
+        <div class="campo">
+          <label>Título *</label>
+          <input
+            type="text"
+            placeholder="Ex: Comprar um carro"
+            [(ngModel)]="novaMetaForm.titulo"
+            maxlength="60">
+        </div>
+
+        <div class="campo">
+          <label>Descrição</label>
+          <input
+            type="text"
+            placeholder="Detalhes opcionais..."
+            [(ngModel)]="novaMetaForm.descricao">
+        </div>
+
+        <div class="campo">
+          <label>Valor Total (R$) *</label>
+          <input
+            type="number"
+            placeholder="0,00"
+            [(ngModel)]="novaMetaForm.valor_total"
+            min="0">
+        </div>
+
+        <div class="campo">
+          <label>Número de Meses *</label>
+          <select [(ngModel)]="novaMetaForm.total_periodos">
+            <option *ngFor="let op of opcoesMeses" [ngValue]="op.valor">
+              {{ op.label }}
+            </option>
+          </select>
+        </div>
+
+        <!-- CAMPO PERSONALIZADO -->
+        <div class="campo" *ngIf="novaMetaForm.total_periodos === PERSONALIZAR">
+          <label>Quantos meses? *</label>
+          <input
+            type="number"
+            placeholder="Ex: 150"
+            [(ngModel)]="mesesPersonalizado"
+            min="1"
+            max="600">
+        </div>
+
+        <!-- PRÉVIA DO VALOR CALCULADO -->
+        <div class="preview-calculo" *ngIf="valorPorMesCalculado">
+          <span class="preview-label">Valor mensal estimado</span>
+          <strong class="preview-valor">{{ formatarMoeda(valorPorMesCalculado) }}/mês</strong>
+        </div>
+
+        <p class="erro-msg" *ngIf="erroForm">{{ erroForm }}</p>
+
+      </div>
+
+      <div class="modal-footer">
+
+        <button
+          class="btn-cancelar"
+          (click)="fecharModal()"
+          [disabled]="salvando">
+          Cancelar
+        </button>
+
+        <button
+          class="btn-salvar"
+          (click)="salvarMeta()"
+          [disabled]="salvando">
+
+          <div class="spinner-pequeno branco" *ngIf="salvando"></div>
+          <span *ngIf="!salvando">Criar Meta</span>
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- MODAL CONFIRMAÇÃO EXCLUSÃO -->
+  <div
+    class="overlay"
+    *ngIf="mostrarConfirmacaoExclusao"
+    (click)="cancelarExclusao()">
+
+    <div class="modal modal-confirm" (click)="$event.stopPropagation()">
+
+      <div class="confirm-icone">🗑️</div>
+
+      <h3>Excluir meta?</h3>
+
+      <p>
+        Todos os registros de pagamento também serão excluídos. Essa ação não pode ser desfeita.
+      </p>
+
+      <div class="modal-footer">
+
+        <button class="btn-cancelar" (click)="cancelarExclusao()">
+          Cancelar
+        </button>
+
+        <button class="btn-excluir-conf" (click)="excluirMeta()">
+          Excluir
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+</ion-content>
