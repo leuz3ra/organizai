@@ -1,432 +1,299 @@
 <ion-content>
 
   <!-- ================================================= -->
-  <!-- TOPO -->
+  <!-- TOPO                                              -->
   <!-- ================================================= -->
 
   <div class="topo">
-
     <div class="logo-area">
-
-      <img
-        src="assets/icon.png"
-        alt="OrganizAí">
-
-      <h1>
-        OrganizAí
-      </h1>
-
+      <img src="assets/icon.png" alt="OrganizAí">
+      <h1>OrganizAí</h1>
     </div>
-
-
-    <ion-icon
-      name="arrow-back-outline"
-      class="voltar"
-      (click)="voltar()">
-    </ion-icon>
-
+    <ion-icon name="arrow-back-outline" class="voltar" (click)="voltar()"></ion-icon>
   </div>
 
 
   <!-- ================================================= -->
-  <!-- LOADING PRINCIPAL -->
+  <!-- LOADING                                           -->
   <!-- ================================================= -->
 
-  <div
-    class="loading-container"
-    *ngIf="carregando">
-
-    <div class="loading-logo">
-
-      <img
-        src="assets/icon.png"
-        alt="Carregando">
-
-    </div>
-
-
-    <div class="loading-pulse">
-
-      <span></span>
-      <span></span>
-      <span></span>
-
-    </div>
-
-
-    <h3>
-      OrganizAí
-    </h3>
-
-
-    <p>
-      Organizando seus investimentos...
-    </p>
-
+  <div class="loading-wrap" *ngIf="carregando">
+    <div class="spinner"></div>
+    <p>Carregando investimentos...</p>
   </div>
 
 
   <!-- ================================================= -->
-  <!-- CONTEÚDO -->
+  <!-- CONTEÚDO PRINCIPAL                                -->
   <!-- ================================================= -->
 
-  <ng-container
-    *ngIf="!carregando">
+  <ng-container *ngIf="!carregando">
 
-
-    <!-- =============================================== -->
     <!-- CABEÇALHO -->
-    <!-- =============================================== -->
-
-    <div class="cabecalho-rendas">
-
-      <h2>
-        Meus Investimentos
-      </h2>
-
-
-      <p>
-        Acompanhe suas simulações financeiras
-      </p>
-
-
-      <div class="total-rendas">
-
-        <span>
-          Total simulado
-        </span>
-
-
-        <strong>
-
-          R$
-          {{
-            total
-            | number:'1.2-2':'pt-BR'
-          }}
-
-        </strong>
-
+    <div class="page-header">
+      <div>
+        <h2>Investimentos</h2>
+        <p>Acompanhe suas aplicações simuladas</p>
       </div>
-
-    </div>
-
-
-    <!-- =============================================== -->
-    <!-- NOVO INVESTIMENTO -->
-    <!-- =============================================== -->
-
-    <div
-      class="novo-investimento"
-      [class.desabilitado]="navegandoNovo"
-      (click)="novoInvestimento()">
-
-
-      <div
-        class="novo-icone"
-        *ngIf="!navegandoNovo">
-
-        <ion-icon
-          name="add-outline">
-        </ion-icon>
-
-      </div>
-
-
-      <div
-        class="spinner-pequeno"
-        *ngIf="navegandoNovo">
-      </div>
-
-
-      <span>
-
-        {{
-          navegandoNovo
-            ? 'Abrindo...'
-            : 'Novo Investimento'
-        }}
-
-      </span>
-
-    </div>
-
-
-    <!-- =============================================== -->
-    <!-- ERRO -->
-    <!-- =============================================== -->
-
-    <div
-      class="estado erro"
-      *ngIf="erro">
-
-
-      <div class="erro-icone">
-
-        !
-
-      </div>
-
-
-      <h3>
-        Não foi possível carregar
-      </h3>
-
-
-      <p>
-        {{ erro }}
-      </p>
-
-
-      <button
-        type="button"
-        (click)="tentarNovamente()">
-
-        <ion-icon
-          name="refresh-outline">
-        </ion-icon>
-
-        Tentar novamente
-
+      <button class="btn-novo" (click)="abrirModalInvestimento()">
+        <ion-icon name="add-outline"></ion-icon>
+        Novo
       </button>
+    </div>
 
+    <!-- TOTAL SIMULADO -->
+    <div class="total-card" *ngIf="rendas.length > 0">
+      <div class="total-info">
+        <span>Patrimônio Total</span>
+        <strong>R$ {{ total | number:'1.2-2':'pt-BR' }}</strong>
+      </div>
+      <div class="total-badge">
+        <ion-icon name="trending-up-outline"></ion-icon>
+        <span>Rendendo</span>
+      </div>
     </div>
 
 
-    <!-- =============================================== -->
+    <!-- ERRO -->
+    <div class="estado-erro" *ngIf="erro">
+      <div class="erro-icone">!</div>
+      <h3>Não foi possível carregar</h3>
+      <p>{{ erro }}</p>
+      <button type="button" (click)="tentarNovamente()">
+        <ion-icon name="refresh-outline"></ion-icon>
+        Tentar novamente
+      </button>
+    </div>
+
+
     <!-- LISTA -->
-    <!-- =============================================== -->
+    <div class="lista-rendas" *ngIf="!erro">
 
-    <div
-      class="lista-rendas"
-      *ngIf="!erro">
+      <!-- ESTADO VAZIO -->
+      <div class="estado-vazio" *ngIf="rendas.length === 0">
+        <div class="vazio-icone">📊</div>
+        <h3>Nenhum investimento ainda</h3>
+        <p>Crie sua primeira aplicação simulada e acompanhe os rendimentos.</p>
+        <button type="button" class="btn-criar" (click)="abrirModalInvestimento()">
+          Adicionar investimento
+        </button>
+      </div>
 
-
-      <!-- ============================================= -->
-      <!-- CARDS -->
-      <!-- ============================================= -->
-
+      <!-- CARDS DE INVESTIMENTO -->
       <div
         class="renda-card"
         *ngFor="let renda of rendas; trackBy: trackById">
 
-
-        <!-- =========================================== -->
         <!-- TOPO DO CARD -->
-        <!-- =========================================== -->
-
-        <div class="card-topo">
-
-
-          <div>
-
-            <h3>
-              {{ renda.titulo }}
-            </h3>
-
-
-            <span class="tipo">
-
-              {{ renda.tipo_investimento }}
-
-            </span>
-
+        <div class="card-header">
+          <div class="card-info">
+            <h3>{{ renda.titulo }}</h3>
+            <span class="tipo-badge">{{ renda.tipo_investimento }}</span>
           </div>
-
-
-          <span class="data">
-
-            {{
-              renda.data_recebimento
-              | date:'dd/MM/yyyy'
-            }}
-
-          </span>
-
+          <span class="data-badge">{{ renda.data_recebimento | date:'dd/MM/yyyy' }}</span>
         </div>
 
-
-        <!-- =========================================== -->
-        <!-- SALDO -->
-        <!-- =========================================== -->
-
-        <div class="saldo">
-
-          <span>
-            Saldo atual
-          </span>
-
-
-          <strong>
-
-            R$
-            {{
-              renda.saldo_atual
-              | number:'1.2-2':'pt-BR'
-            }}
-
-          </strong>
-
+        <!-- SALDO PRINCIPAL -->
+        <div class="saldo-principal">
+          <span>Saldo Atual</span>
+          <strong>R$ {{ renda.saldo_atual | number:'1.2-2':'pt-BR' }}</strong>
         </div>
 
-
-        <!-- =========================================== -->
-        <!-- RENDIMENTO -->
-        <!-- =========================================== -->
-
-        <div class="rendimento">
-
-          <span>
-            Rendimento simulado
-          </span>
-
-
-          <strong>
-
-            + R$
-            {{
-              renda.rendimento
-              | number:'1.2-2':'pt-BR'
-            }}
-
-          </strong>
-
+        <!-- DETALHES -->
+        <div class="card-detalhes">
+          <div class="detalhe-linha">
+            <span>Investido</span>
+            <span>R$ {{ renda.valor_investido | number:'1.2-2':'pt-BR' }}</span>
+          </div>
+          <div class="detalhe-linha">
+            <span>Rendimento</span>
+            <span class="positivo">+ R$ {{ renda.rendimento | number:'1.2-2':'pt-BR' }}</span>
+          </div>
+          <div class="detalhe-linha">
+            <span>Taxa</span>
+            <span class="taxa-val">{{ renda.percentual_rendimento | number:'1.2-2':'pt-BR' }}% a.a.</span>
+          </div>
+          <div class="detalhe-linha" *ngIf="renda.descricao">
+            <span>Nota</span>
+            <span class="desc-val">{{ renda.descricao }}</span>
+          </div>
         </div>
 
-
-        <!-- =========================================== -->
-        <!-- RENTABILIDADE -->
-        <!-- =========================================== -->
-
-        <div class="percentual">
-
-          <span>
-            Rentabilidade anual
-          </span>
-
-
-          <strong>
-
-            {{
-              renda.percentual_rendimento
-              | number:'1.2-2':'pt-BR'
-            }}%
-
-          </strong>
-
-        </div>
-
-
-        <!-- =========================================== -->
-        <!-- VALOR INVESTIDO -->
-        <!-- =========================================== -->
-
-        <div class="valor-inicial">
-
-          <span>
-            Valor investido
-          </span>
-
-
-          <strong>
-
-            R$
-            {{
-              renda.valor_investido
-              | number:'1.2-2':'pt-BR'
-            }}
-
-          </strong>
-
-        </div>
-
-
-        <!-- =========================================== -->
-        <!-- EXCLUIR -->
-        <!-- =========================================== -->
-
-        <div class="acoes-investimento">
-
-
+        <!-- AÇÕES -->
+        <div class="card-acoes">
           <button
-            type="button"
-            class="botao-excluir"
+            class="btn-excluir"
             [disabled]="excluindoId === renda.id"
-            (click)="excluirInvestimento(renda.id!)">
-
-
-            <div
-              class="spinner-pequeno vermelho"
-              *ngIf="excluindoId === renda.id">
-            </div>
-
-
-            <ion-icon
-              name="trash-outline"
-              *ngIf="excluindoId !== renda.id">
-            </ion-icon>
-
-
-            <span>
-
-              {{
-                excluindoId === renda.id
-                  ? 'Excluindo...'
-                  : 'Excluir'
-              }}
-
-            </span>
-
+            (click)="confirmarExclusaoRenda(renda.id!)">
+            <div class="spinner spinner-sm vermelho" *ngIf="excluindoId === renda.id"></div>
+            <ion-icon name="trash-outline" *ngIf="excluindoId !== renda.id"></ion-icon>
+            <span>{{ excluindoId === renda.id ? 'Excluindo...' : 'Excluir' }}</span>
           </button>
-
         </div>
 
-
       </div>
-
-
-      <!-- ============================================= -->
-      <!-- NENHUM INVESTIMENTO -->
-      <!-- ============================================= -->
-
-      <div
-        class="sem-rendas"
-        *ngIf="rendas.length === 0">
-
-
-        <div class="icone-vazio">
-
-          <ion-icon
-            name="add-outline">
-          </ion-icon>
-
-        </div>
-
-
-        <h3>
-          Nenhum investimento ainda
-        </h3>
-
-
-        <p>
-          Comece adicionando seu primeiro
-          investimento simulado.
-        </p>
-
-
-        <button
-          type="button"
-          (click)="novoInvestimento()">
-
-          Adicionar investimento
-
-        </button>
-
-      </div>
-
 
     </div>
 
   </ng-container>
+
+
+  <!-- ================================================= -->
+  <!-- MODAL CLEAN — NOVO INVESTIMENTO                   -->
+  <!-- ================================================= -->
+
+  <div class="overlay" *ngIf="mostrarModalNovo" (click)="fecharModalInvestimento()">
+    <div class="modal modal-clean" (click)="$event.stopPropagation()">
+
+      <!-- ALÇA -->
+      <div class="modal-handle"></div>
+
+      <!-- CABEÇALHO -->
+      <div class="modal-header">
+        <h2>Novo Investimento</h2>
+        <button class="btn-fechar" (click)="fecharModalInvestimento()">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </div>
+
+      <!-- CORPO -->
+      <div class="modal-body">
+
+        <!-- TIPO DE INVESTIMENTO (COM AUTO-CONFIGURAÇÃO DE TAXA) -->
+        <div class="campo">
+          <label>
+            <span>Tipo de Ativo</span>
+            <span class="taxa-tag-auto"><ion-icon name="sparkles-outline"></ion-icon> Taxa auto</span>
+          </label>
+          <div class="select-custom-wrap">
+            <select [(ngModel)]="tipoSelecionadoId" (change)="onTipoAtivoChange()">
+              <option *ngFor="let t of tiposAtivos" [value]="t.id">
+                {{ t.icone }} {{ t.nome }} ({{ t.taxa }}% a.a.)
+              </option>
+            </select>
+            <ion-icon name="chevron-down-outline" class="select-chevron"></ion-icon>
+          </div>
+        </div>
+
+        <!-- VALOR INVESTIDO -->
+        <div class="campo">
+          <label>Valor Investido (R$) *</label>
+          <div class="input-prefix-box">
+            <span class="prefix">R$</span>
+            <input
+              type="number"
+              placeholder="0,00"
+              [(ngModel)]="novoForm.valor_investido"
+              min="1">
+          </div>
+
+          <!-- Atalhos rápidos -->
+          <div class="chips-atalho">
+            <button type="button" (click)="adicionarValorRapido(100)">+100</button>
+            <button type="button" (click)="adicionarValorRapido(500)">+500</button>
+            <button type="button" (click)="adicionarValorRapido(1000)">+1.000</button>
+            <button type="button" (click)="adicionarValorRapido(5000)">+5.000</button>
+            <button type="button" class="chip-limpar" (click)="limparValor()" *ngIf="novoForm.valor_investido">Limpar</button>
+          </div>
+        </div>
+
+        <!-- TÍTULO -->
+        <div class="campo">
+          <label>Título *</label>
+          <input
+            type="text"
+            placeholder="Ex: Reserva de Emergência"
+            [(ngModel)]="novoForm.titulo"
+            maxlength="60">
+        </div>
+
+        <!-- DUAS COLUNAS: TAXA + DATA BONITA -->
+        <div class="grid-dois">
+          <!-- TAXA ANUAL -->
+          <div class="campo">
+            <label>
+              <span>Rentabilidade % a.a.</span>
+            </label>
+            <div class="input-taxa-box">
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Ex: 10.75"
+                [(ngModel)]="novoForm.percentual_rendimento"
+                (input)="onTaxaManual()"
+                min="0">
+              <span class="sufixo-taxa">%</span>
+            </div>
+          </div>
+
+          <!-- DATA BONITA E ESTILIZADA -->
+          <div class="campo">
+            <label>Data de Início *</label>
+            <div class="date-picker-box">
+              <ion-icon name="calendar-outline" class="date-icon"></ion-icon>
+              <input
+                type="date"
+                [(ngModel)]="novoForm.data_recebimento">
+            </div>
+          </div>
+        </div>
+
+        <!-- OBSERVAÇÃO / INSTITUIÇÃO -->
+        <div class="campo">
+          <label>Instituição / Nota (opcional)</label>
+          <input
+            type="text"
+            placeholder="Ex: Nubank, Inter, XP, etc."
+            [(ngModel)]="novoForm.descricao"
+            maxlength="100">
+        </div>
+
+        <!-- PRÉVIA MINIMALISTA E ELEGANTE -->
+        <div class="preview-clean" *ngIf="novoForm.valor_investido && novoForm.valor_investido > 0">
+          <div class="preview-linha">
+            <span>Rendimento em 1 ano</span>
+            <strong class="positivo">+ R$ {{ lucroEstimado1Ano | number:'1.2-2':'pt-BR' }}</strong>
+          </div>
+          <div class="preview-linha">
+            <span>Total estimado em 1 ano</span>
+            <strong>R$ {{ saldoEstimado1Ano | number:'1.2-2':'pt-BR' }}</strong>
+          </div>
+        </div>
+
+        <!-- ERRO -->
+        <p class="erro-msg" *ngIf="erroNovoForm">{{ erroNovoForm }}</p>
+
+      </div>
+
+      <!-- FOOTER -->
+      <div class="modal-footer">
+        <button class="btn-cancelar" (click)="fecharModalInvestimento()" [disabled]="salvandoNovo">
+          Cancelar
+        </button>
+        <button class="btn-salvar" (click)="salvarNovoInvestimento()" [disabled]="salvandoNovo">
+          <div class="spinner spinner-sm branco" *ngIf="salvandoNovo"></div>
+          <span *ngIf="!salvandoNovo">Salvar Investimento</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ================================================= -->
+  <!-- MODAL — CONFIRMAR EXCLUSÃO                        -->
+  <!-- ================================================= -->
+
+  <div class="overlay" *ngIf="mostrarConfirmacaoExclusao" (click)="cancelarExclusaoRenda()">
+    <div class="modal modal-confirm" (click)="$event.stopPropagation()">
+      <div class="confirm-icone">🗑️</div>
+      <h3>Excluir investimento?</h3>
+      <p>Essa ação removerá o ativo da sua simulação.</p>
+      <div class="modal-footer">
+        <button class="btn-cancelar" (click)="cancelarExclusaoRenda()">Cancelar</button>
+        <button class="btn-excluir-conf" (click)="excluirInvestimentoConfirmado()">Excluir</button>
+      </div>
+    </div>
+  </div>
 
 </ion-content>

@@ -1,37 +1,461 @@
-/*
- * App Global CSS
- * ----------------------------------------------------------------------------
- * Put style rules here that you want to apply globally. These styles are for
- * the entire app and not just one component. Additionally, this file can be
- * used as an entry point to import other CSS/Sass files to be included in the
- * output CSS.
- * For more information on global stylesheets, visit the documentation:
- * https://ionicframework.com/docs/layout/global-stylesheets
- */
-
 /* Core CSS required for Ionic components to work properly */
 @import "@ionic/angular/css/core.css";
-
-/* Basic CSS for apps built with Ionic */
 @import "@ionic/angular/css/normalize.css";
 @import "@ionic/angular/css/structure.css";
 @import "@ionic/angular/css/typography.css";
 @import "@ionic/angular/css/display.css";
-
-/* Optional CSS utils that can be commented out */
 @import "@ionic/angular/css/padding.css";
 @import "@ionic/angular/css/float-elements.css";
 @import "@ionic/angular/css/text-alignment.css";
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
+/* Dark mode desativado — design sempre claro */
+/* @import '@ionic/angular/css/palettes/dark.system.css'; */
 
-/* @import "@ionic/angular/css/palettes/dark.always.css"; */
-/* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import '@ionic/angular/css/palettes/dark.system.css';
+/* ============================================================
+   GOOGLE FONTS — Inter
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&display=swap');
+
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+  /* --- Superfícies --- */
+  --c-bg:            #F8F9FB;
+  --c-surface:       #FFFFFF;
+  --c-surface-2:     #F3F5F7;
+  --c-border:        #E8EBF0;
+  --c-border-light:  #F0F2F5;
+
+  /* --- Texto --- */
+  --c-text-primary:   #0F1117;
+  --c-text-secondary: #5A6478;
+  --c-text-muted:     #9BA5B8;
+
+  /* --- Verde-musgo (acento principal) --- */
+  --c-accent:        #1E5C3A;
+  --c-accent-hover:  #174d31;
+  --c-accent-mid:    #40A06A;
+  --c-accent-light:  #E8F5EE;
+  --c-accent-border: #C0DFD0;
+
+  /* --- Perigo --- */
+  --c-danger:        #D93025;
+  --c-danger-light:  #FEF2F1;
+  --c-danger-border: #FAC5C0;
+
+  /* --- Azul informativo --- */
+  --c-info:          #1A56DB;
+  --c-info-light:    #EBF5FF;
+  --c-info-border:   #C3DDFD;
+
+  /* --- Âmbar --- */
+  --c-amber:         #92400E;
+  --c-amber-light:   #FFFBEB;
+  --c-amber-border:  #FDE68A;
+
+  /* --- Raios --- */
+  --r-xs:  6px;
+  --r-sm:  8px;
+  --r-md:  12px;
+  --r-lg:  16px;
+  --r-xl:  20px;
+  --r-2xl: 24px;
+
+  /* --- Sombras --- */
+  --shadow-xs: 0 1px 2px rgba(15,17,23,.04);
+  --shadow-sm: 0 1px 4px rgba(15,17,23,.06), 0 2px 8px rgba(15,17,23,.04);
+  --shadow-md: 0 4px 16px rgba(15,17,23,.08);
+  --shadow-accent: 0 4px 16px rgba(30,92,58,.24);
+  --shadow-danger: 0 4px 14px rgba(217,48,37,.22);
+
+  /* --- Tipografia --- */
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* --- Transições --- */
+  --t-fast:   0.12s ease;
+  --t-base:   0.18s ease;
+  --t-slow:   0.28s ease;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body, ion-app {
+  font-family: var(--font) !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--c-bg);
+  color: var(--c-text-primary);
+}
+
+ion-content {
+  --background: var(--c-bg);
+}
+
+/* Remove setas do input number */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Scrollbar invisível */
+::-webkit-scrollbar { display: none; }
+
+/* ============================================================
+   UTILITÁRIOS PARTILHADOS
+   ============================================================ */
+
+/* Barra de topo padrão */
+.page-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--c-surface);
+  padding: 13px 20px;
+  border-bottom: 1px solid var(--c-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  .topo-logo {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    img {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    span {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--c-text-primary);
+      letter-spacing: -0.4px;
+    }
+  }
+}
+
+/* Spinner partilhado */
+.spin {
+  border-radius: 50%;
+  border-style: solid;
+  animation: spin 0.65s linear infinite;
+  flex-shrink: 0;
+
+  &--md  { width: 24px; height: 24px; border-width: 2.5px; border-color: var(--c-border); border-top-color: var(--c-accent); }
+  &--sm  { width: 15px; height: 15px; border-width: 2px;   border-color: var(--c-border); border-top-color: var(--c-accent); }
+  &--w   { border-color: rgba(255,255,255,.25); border-top-color: #fff; }
+  &--r   { border-color: rgba(217,48,37,.2);   border-top-color: var(--c-danger); }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Overlay partilhado */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,17,23,.35);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 500;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+/* Bottom Sheet partilhado */
+.bottom-sheet {
+  background: var(--c-surface);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  width: 100%;
+  max-width: 600px;
+  max-height: 92vh;
+  overflow-y: auto;
+
+  &__handle {
+    width: 36px;
+    height: 4px;
+    background: var(--c-border);
+    border-radius: 99px;
+    margin: 14px auto 0;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 0;
+
+    h2 {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--c-text-primary);
+      letter-spacing: -0.3px;
+    }
+
+    button {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--c-bg);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background var(--t-fast);
+
+      ion-icon { font-size: 17px; color: var(--c-text-muted); }
+      &:active { background: var(--c-border); }
+    }
+  }
+
+  &__body {
+    padding: 14px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  &__footer {
+    display: flex;
+    gap: 10px;
+    padding: 6px 20px 34px;
+  }
+}
+
+/* Modal centrado (confirmação) */
+.modal-center {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,17,23,.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  padding: 20px;
+
+  .modal-box {
+    background: var(--c-surface);
+    border-radius: var(--r-xl);
+    width: 100%;
+    max-width: 320px;
+    padding: 28px 24px 22px;
+    text-align: center;
+
+    .modal-icon { font-size: 42px; margin-bottom: 14px; }
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--c-text-primary);
+      letter-spacing: -0.3px;
+    }
+
+    p {
+      margin: 0 0 4px;
+      font-size: 13px;
+      color: var(--c-text-secondary);
+      line-height: 1.55;
+    }
+  }
+}
+
+/* Campos de formulário partilhados */
+.field {
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--c-text-muted);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    background: var(--c-bg);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-md);
+    padding: 11px 13px;
+    font-size: 15px;
+    color: var(--c-text-primary);
+    outline: none;
+    font-family: var(--font);
+    transition: border-color var(--t-base), box-shadow var(--t-base), background var(--t-base);
+    box-sizing: border-box;
+    appearance: auto;
+    resize: none;
+
+    &::placeholder { color: var(--c-text-muted); }
+
+    &:focus {
+      border-color: var(--c-accent-mid);
+      background: var(--c-surface);
+      box-shadow: 0 0 0 3px rgba(64,160,106,.12);
+    }
+  }
+}
+
+/* Botões partilhados */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  border-radius: var(--r-md);
+  font-family: var(--font);
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity var(--t-fast), transform var(--t-fast);
+
+  &:active { opacity: 0.85; transform: scale(0.97); }
+  &:disabled { opacity: 0.5; cursor: default; transform: none; }
+
+  &--primary {
+    background: var(--c-accent);
+    color: #fff;
+    box-shadow: var(--shadow-accent);
+    &:active { box-shadow: none; }
+  }
+
+  &--secondary {
+    background: var(--c-surface);
+    color: var(--c-text-secondary);
+    border: 1px solid var(--c-border);
+    box-shadow: none;
+  }
+
+  &--danger {
+    background: var(--c-danger);
+    color: #fff;
+    box-shadow: var(--shadow-danger);
+    &:active { box-shadow: none; }
+  }
+
+  &--ghost {
+    background: transparent;
+    color: var(--c-text-muted);
+    border: 1px solid var(--c-border);
+  }
+
+  &--sm  { height: 34px; padding: 0 13px; font-size: 13px; }
+  &--md  { height: 42px; padding: 0 18px; font-size: 14px; }
+  &--lg  { height: 50px; padding: 0 22px; font-size: 15px; }
+  &--full { width: 100%; }
+}
+
+/* Estado vazio partilhado */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 72px 32px 48px;
+
+  .empty-icon {
+    font-size: 48px;
+    margin-bottom: 18px;
+    opacity: 0.75;
+  }
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--c-text-primary);
+    letter-spacing: -0.3px;
+  }
+
+  p {
+    margin: 0 0 26px;
+    color: var(--c-text-secondary);
+    font-size: 14px;
+    line-height: 1.65;
+    max-width: 240px;
+  }
+}
+
+/* Erro de formulário */
+.form-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--c-danger);
+  padding: 10px 13px;
+  background: var(--c-danger-light);
+  border: 1px solid var(--c-danger-border);
+  border-radius: var(--r-md);
+  line-height: 1.45;
+}
+
+/* Preview/info box */
+.info-box {
+  border-radius: var(--r-md);
+  padding: 13px 15px;
+
+  &--green {
+    background: var(--c-accent-light);
+    border: 1px solid var(--c-accent-border);
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+
+    span {
+      font-size: 12px;
+      color: var(--c-accent);
+      font-weight: 500;
+    }
+
+    strong {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--c-accent);
+    }
+  }
+}
+
+/* Chip/badge partilhado */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 99px;
+  letter-spacing: 0.1px;
+
+  &--green  { background: var(--c-accent-light);  color: var(--c-accent);  border: 1px solid var(--c-accent-border); }
+  &--blue   { background: var(--c-info-light);    color: var(--c-info);    border: 1px solid var(--c-info-border); }
+  &--amber  { background: var(--c-amber-light);   color: var(--c-amber);   border: 1px solid var(--c-amber-border); }
+  &--muted  { background: var(--c-surface-2);     color: var(--c-text-muted); border: 1px solid var(--c-border); }
+}

@@ -1,93 +1,156 @@
 <ion-content [fullscreen]="true">
 
-  <div class="cadastro-container">
+  <div class="auth-page-wrap">
 
-    <div class="logo-area">
+    <!-- BANNER PANORÂMICO NO TOPO COM PROFUNDIDADE -->
+    <div class="auth-top-banner">
+      <div class="banner-bg" [style.background-image]="'url(assets/auth_banner.jpg)'"></div>
+      <div class="banner-gradient"></div>
 
-      <h1>OrganizAí</h1>
-
-      <p>
-        Crie sua conta e comece a organizar
-        sua vida financeira.
-      </p>
-
+      <div class="banner-content">
+        <div class="banner-brand">
+          <img src="assets/icon.png" alt="OrganizAí" class="banner-brand-logo">
+          <span class="banner-brand-name">OrganizAí</span>
+        </div>
+        <h1 class="banner-tagline">Comece sua Jornada Financeira</h1>
+        <p class="banner-subline">Defina metas reais, simule lucros e organize seu futuro.</p>
+      </div>
     </div>
 
-    <div class="cadastro-card">
+    <!-- CARD DE CADASTRO SOBREPOSTO -->
+    <div class="auth-card-container">
+      <div class="auth-card-box">
+        <div class="form-header">
+          <h2>Crie sua conta</h2>
+          <p>Preencha os dados abaixo com segurança</p>
+        </div>
 
-      <h2>Criar conta</h2>
+        <form (ngSubmit)="cadastrar()" class="form-body">
 
-      <ion-input
-        label="Nome"
-        label-placement="floating"
-        fill="outline"
-        type="text"
-        [(ngModel)]="nome"
-        placeholder="Digite seu nome">
-      </ion-input>
+          <!-- NOME COMPLETO -->
+          <div class="input-field">
+            <label>Nome Completo</label>
+            <div class="input-box">
+              <ion-icon name="person-outline" class="field-icon"></ion-icon>
+              <input
+                type="text"
+                [(ngModel)]="nome"
+                name="nome"
+                placeholder="Seu nome completo"
+                autocomplete="name"
+                required>
+            </div>
+          </div>
 
-      <ion-input
-        label="E-mail"
-        label-placement="floating"
-        fill="outline"
-        type="email"
-        [(ngModel)]="email"
-        placeholder="seu@email.com">
-      </ion-input>
+          <!-- E-MAIL -->
+          <div class="input-field">
+            <label>Endereço de E-mail</label>
+            <div class="input-box">
+              <ion-icon name="mail-outline" class="field-icon"></ion-icon>
+              <input
+                type="email"
+                [(ngModel)]="email"
+                name="email"
+                placeholder="seu.email@exemplo.com"
+                autocomplete="email"
+                required>
+            </div>
+          </div>
 
-      <ion-input
-        label="Senha"
-        label-placement="floating"
-        fill="outline"
-        type="password"
-        [(ngModel)]="senha"
-        placeholder="Digite sua senha">
-      </ion-input>
+          <!-- SENHA -->
+          <div class="input-field">
+            <label>Senha Forte</label>
+            <div class="input-box">
+              <ion-icon name="lock-closed-outline" class="field-icon"></ion-icon>
+              <input
+                [type]="mostrarSenha ? 'text' : 'password'"
+                [(ngModel)]="senha"
+                name="senha"
+                placeholder="Crie uma senha segura"
+                autocomplete="new-password"
+                required>
+              <button type="button" class="btn-toggle-pass" (click)="toggleMostrarSenha()">
+                <ion-icon [name]="mostrarSenha ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+              </button>
+            </div>
+          </div>
 
-      <ion-input
-        label="Confirmar senha"
-        label-placement="floating"
-        fill="outline"
-        type="password"
-        [(ngModel)]="confirmarSenha"
-        placeholder="Digite a senha novamente">
-      </ion-input>
+          <!-- MEDIDOR DE FORÇA DE SENHA INTERATIVO -->
+          <div class="strength-meter-wrap" *ngIf="senha">
+            <div class="strength-bar-header">
+              <span>Segurança da senha:</span>
+              <strong [class]="'strength-label ' + nivelForca.classe">{{ nivelForca.label }}</strong>
+            </div>
 
-      <div
-        class="erro"
-        *ngIf="erro">
-        {{ erro }}
+            <div class="strength-bar-track">
+              <div
+                class="strength-bar-fill"
+                [class]="nivelForca.classe"
+                [style.width.%]="pontuacaoSenha">
+              </div>
+            </div>
+
+            <!-- CHECKLIST DE CRITÉRIOS -->
+            <div class="checklist-criterios">
+              <div
+                class="criterio-item"
+                *ngFor="let c of criteriosSenha"
+                [class.criterio-valido]="c.valido">
+                <ion-icon [name]="c.valido ? 'checkmark-circle-outline' : 'close-circle-outline'"></ion-icon>
+                <span>{{ c.label }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CONFIRMAÇÃO DE SENHA -->
+          <div class="input-field">
+            <label>Confirmar Senha</label>
+            <div class="input-box">
+              <ion-icon name="lock-closed-outline" class="field-icon"></ion-icon>
+              <input
+                [type]="mostrarConfirmarSenha ? 'text' : 'password'"
+                [(ngModel)]="confirmarSenha"
+                name="confirmarSenha"
+                placeholder="Digite a senha novamente"
+                autocomplete="new-password"
+                required>
+              <button type="button" class="btn-toggle-pass" (click)="toggleMostrarConfirmarSenha()">
+                <ion-icon [name]="mostrarConfirmarSenha ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+              </button>
+            </div>
+          </div>
+
+          <!-- MENSAGEM DE ERRO -->
+          <div class="msg-alert msg-erro" *ngIf="erro">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            <span>{{ erro }}</span>
+          </div>
+
+          <!-- MENSAGEM DE SUCESSO -->
+          <div class="msg-alert msg-sucesso" *ngIf="sucesso">
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            <span>{{ sucesso }}</span>
+          </div>
+
+          <!-- BOTÃO PRINCIPAL -->
+          <button
+            type="submit"
+            class="btn-auth-submit"
+            [disabled]="carregando">
+            <div class="spinner-auth" *ngIf="carregando"></div>
+            <span *ngIf="!carregando">Criar Conta no OrganizAí</span>
+            <ion-icon name="arrow-forward-outline" *ngIf="!carregando"></ion-icon>
+          </button>
+
+          <!-- LINK PARA LOGIN -->
+          <div class="switch-auth-link">
+            <span>Já possui uma conta?</span>
+            <button type="button" (click)="voltarParaLogin()">Entrar agora</button>
+          </div>
+
+        </form>
+
       </div>
-
-      <div
-        class="sucesso"
-        *ngIf="sucesso">
-        {{ sucesso }}
-      </div>
-
-      <ion-button
-        expand="block"
-        (click)="cadastrar()"
-        [disabled]="carregando">
-
-        {{ carregando ? 'Criando conta...' : 'Criar conta' }}
-
-      </ion-button>
-
-      <div class="login-link">
-
-        <span>Já possui uma conta?</span>
-
-        <button
-          type="button"
-          (click)="voltarParaLogin()">
-
-          Entrar
-
-        </button>
-
-      </div>
-
     </div>
 
   </div>

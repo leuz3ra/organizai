@@ -17,7 +17,7 @@ export class SupabaseService {
   }
 
   // ==============================
-  // AUTENTICAÇÃO
+  // AUTENTICAÇÃO & PERFIL
   // ==============================
 
   async cadastrar(
@@ -37,6 +37,21 @@ export class SupabaseService {
 
     if (error) {
       throw error;
+    }
+
+    // Se o usuário foi criado, também registra na tabela profiles caso exista
+    if (data?.user) {
+      try {
+        await this.supabase
+          .from('profiles')
+          .upsert({
+            id: data.user.id,
+            nome: nome,
+            email: email
+          });
+      } catch (profileError) {
+        console.warn('Nota: Inserção em profiles ignorada:', profileError);
+      }
     }
 
     return data;
@@ -76,6 +91,23 @@ export class SupabaseService {
     }
 
     return data.user;
+  }
+
+  async obterNomePerfil(userId: string): Promise<string | null> {
+    try {
+      const { data, error } = await this.supabase
+        .from('profiles')
+        .select('nome')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (!error && data && data.nome) {
+        return data.nome;
+      }
+    } catch (e) {
+      console.warn('Erro ao consultar tabela profiles:', e);
+    }
+    return null;
   }
 
 }

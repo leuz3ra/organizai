@@ -23,13 +23,24 @@ import {
 import { MetasService } from '../../services/metas.service';
 import { Meta, MetaPagamento } from '../../models/meta.model';
 
-
 interface MetaComPagamentos extends Meta {
   pagamentos: MetaPagamento[];
   expandida: boolean;
   carregando: boolean;
 }
 
+function parseNum(val: any): number {
+  if (val === null || val === undefined || val === '') return 0;
+  if (typeof val === 'number') return isNaN(val) ? 0 : val;
+  let s = String(val).replace(/\s/g, '').replace(/R\$/gi, '').trim();
+  if (s.includes(',') && s.includes('.')) {
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else if (s.includes(',')) {
+    s = s.replace(',', '.');
+  }
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
 
 @Component({
   selector: 'app-metas',
@@ -93,10 +104,10 @@ export class MetasPage implements OnInit {
   }
 
   get valorPorMesCalculado(): number | null {
-    const total = Number(this.novaMetaForm.valor_total);
+    const total = parseNum(this.novaMetaForm.valor_total);
     const meses = this.mesesEfetivos;
     if (!total || !meses || meses < 1) return null;
-    return total / meses;
+    return Number((total / meses).toFixed(2));
   }
 
   erroForm = '';
@@ -121,32 +132,42 @@ export class MetasPage implements OnInit {
     await this.carregarMetas();
   }
 
+  async ionViewWillEnter() {
+    await this.carregarMetas();
+  }
+
 
   // =====================================================
-  // CARREGAR METAS
+  // CARREGAR METAS COM PAGAMENTOS
   // =====================================================
 
   async carregarMetas() {
-
     this.carregandoMetas = true;
 
     try {
+      const [metas, todosPagamentos] = await Promise.all([
+        this.metasService.listarMetas(),
+        this.metasService.listarTodosPagamentosUsuario()
+      ]);
 
-      const metas = await this.metasService.listarMetas();
-
-      this.metas = metas.map(m => ({
-        ...m,
-        pagamentos: [],
-        expandida: false,
-        carregando: false
-      }));
+      this.metas = metas.map(m => {
+        const pagamentosDaMeta = todosPagamentos.filter(p => p.meta_id === m.id);
+        return {
+          ...m,
+          valor_total: parseNum(m.valor_total),
+          valor_por_periodo: parseNum(m.valor_por_periodo),
+          total_periodos: Math.max(1, Math.round(parseNum(m.total_periodos))),
+          pagamentos: pagamentosDaMeta,
+          expandida: false,
+          carregando: false
+        };
+      });
 
     } catch (err) {
       console.error('Erro ao carregar metas:', err);
     } finally {
       this.carregandoMetas = false;
     }
-
   }
 
 
@@ -155,26 +176,24 @@ export class MetasPage implements OnInit {
   // =====================================================
 
   async toggleExpandir(meta: MetaComPagamentos) {
-
     if (meta.expandida) {
       meta.expandida = false;
       return;
     }
 
     meta.expandida = true;
-    meta.carregando = true;
 
-    try {
-
-      const pagamentos = await this.metasService.listarPagamentos(meta.id!);
-      meta.pagamentos = pagamentos;
-
-    } catch (err) {
-      console.error('Erro ao carregar pagamentos:', err);
-    } finally {
-      meta.carregando = false;
+    if (meta.pagamentos.length === 0 && meta.id) {
+      meta.carregando = true;
+      try {
+        const pagamentos = await this.metasService.listarPagamentos(meta.id);
+        meta.pagamentos = pagamentos;
+      } catch (err) {
+        console.error('Erro ao carregar pagamentos detalhados:', err);
+      } finally {
+        meta.carregando = false;
+      }
     }
-
   }
 
 
@@ -183,28 +202,25 @@ export class MetasPage implements OnInit {
   // =====================================================
 
   getBlocoPago(meta: MetaComPagamentos, periodo: number): boolean {
-
     const pagamento = meta.pagamentos.find(p => p.periodo === periodo);
-    return pagamento ? pagamento.pago : false;
-
+    return pagamento ? Boolean(pagamento.pago) : false;
   }
 
   getArrayPeriodos(total: number): number[] {
-    return Array.from({ length: total }, (_, i) => i + 1);
+    const n = Math.max(1, Math.round(parseNum(total)));
+    return Array.from({ length: n }, (_, i) => i + 1);
   }
 
   getProgressoPorcentagem(meta: MetaComPagamentos): number {
-
-    const pagos = meta.pagamentos.filter(p => p.pago).length;
-    return Math.round((pagos / meta.total_periodos) * 100);
-
+    const total = Math.max(1, Math.round(parseNum(meta.total_periodos)));
+    const pagos = (meta.pagamentos || []).filter(p => p.pago).length;
+    return Math.min(100, Math.round((pagos / total) * 100));
   }
 
   getTotalArrecadado(meta: MetaComPagamentos): number {
-
-    const pagos = meta.pagamentos.filter(p => p.pago).length;
-    return pagos * meta.valor_por_periodo;
-
+    const pagos = (meta.pagamentos || []).filter(p => p.pago).length;
+    const valorPorPeriodo = parseNum(meta.valor_por_periodo);
+    return Number((pagos * valorPorPeriodo).toFixed(2));
   }
 
   isMetaConcluida(meta: MetaComPagamentos): boolean {
@@ -217,10 +233,8 @@ export class MetasPage implements OnInit {
   // =====================================================
 
   async toggleBloco(meta: MetaComPagamentos, periodo: number) {
-
     const pagoAtual = this.getBlocoPago(meta, periodo);
 
-    // Atualização otimista imediata na UI
     const existente = meta.pagamentos.find(p => p.periodo === periodo);
 
     if (existente) {
@@ -234,32 +248,25 @@ export class MetasPage implements OnInit {
     }
 
     try {
-
       const atualizado = await this.metasService.togglePagamento(
         meta.id!,
         periodo,
         pagoAtual
       );
 
-      // Sincroniza com o resultado real do servidor
       const idx = meta.pagamentos.findIndex(p => p.periodo === periodo);
       if (idx >= 0) {
         meta.pagamentos[idx] = atualizado;
       }
 
     } catch (err) {
-
       console.error('Erro ao atualizar bloco:', err);
-
-      // Reverte em caso de erro
       if (existente) {
         existente.pago = pagoAtual;
       } else {
         meta.pagamentos = meta.pagamentos.filter(p => p.periodo !== periodo);
       }
-
     }
-
   }
 
 
@@ -268,7 +275,6 @@ export class MetasPage implements OnInit {
   // =====================================================
 
   abrirModal() {
-
     this.novaMetaForm = {
       titulo: '',
       descricao: '',
@@ -278,7 +284,6 @@ export class MetasPage implements OnInit {
     this.mesesPersonalizado = null;
     this.erroForm = '';
     this.mostrarModal = true;
-
   }
 
   fecharModal() {
@@ -286,26 +291,21 @@ export class MetasPage implements OnInit {
   }
 
   async salvarMeta() {
-
     this.erroForm = '';
 
-    if (!this.novaMetaForm.titulo.trim()) {
+    if (!this.novaMetaForm.titulo?.trim()) {
       this.erroForm = 'Informe o título da meta.';
       return;
     }
 
-    if (
-      !this.novaMetaForm.valor_total ||
-      this.novaMetaForm.valor_total <= 0
-    ) {
+    const valorTotal = parseNum(this.novaMetaForm.valor_total);
+    if (!valorTotal || valorTotal <= 0) {
       this.erroForm = 'Informe um valor total válido.';
       return;
     }
 
-    if (
-      !this.novaMetaForm.total_periodos ||
-      this.mesesEfetivos < 1
-    ) {
+    const meses = this.mesesEfetivos;
+    if (!meses || meses < 1) {
       this.erroForm = 'Informe um número de meses válido.';
       return;
     }
@@ -321,13 +321,14 @@ export class MetasPage implements OnInit {
     this.salvando = true;
 
     try {
+      const valorPorPeriodo = Number((valorTotal / meses).toFixed(2));
 
       const meta = await this.metasService.criarMeta({
         titulo: this.novaMetaForm.titulo.trim(),
-        descricao: this.novaMetaForm.descricao.trim() || null,
-        valor_total: Number(this.novaMetaForm.valor_total),
-        valor_por_periodo: this.valorPorMesCalculado!,
-        total_periodos: this.mesesEfetivos
+        descricao: this.novaMetaForm.descricao?.trim() || null,
+        valor_total: valorTotal,
+        valor_por_periodo: valorPorPeriodo,
+        total_periodos: meses
       });
 
       this.metas.unshift({
@@ -345,7 +346,6 @@ export class MetasPage implements OnInit {
     } finally {
       this.salvando = false;
     }
-
   }
 
 
@@ -365,34 +365,30 @@ export class MetasPage implements OnInit {
   }
 
   async excluirMeta() {
-
     if (!this.metaParaExcluir) return;
 
     try {
-
       await this.metasService.excluirMeta(this.metaParaExcluir);
-
       this.metas = this.metas.filter(m => m.id !== this.metaParaExcluir);
-
     } catch (err) {
       console.error('Erro ao excluir meta:', err);
     } finally {
       this.cancelarExclusao();
     }
-
   }
 
 
   // =====================================================
-  // NAVEGAÇÃO
+  // FORMATADORES E NAVEGAÇÃO
   // =====================================================
 
   voltar() {
     this.router.navigate(['/dashboard']);
   }
 
-  formatarMoeda(valor: number): string {
-    return valor.toLocaleString('pt-BR', {
+  formatarMoeda(valor: any): string {
+    const n = parseNum(valor);
+    return n.toLocaleString('pt-BR', {
       style: 'currency',
       currency: 'BRL'
     });

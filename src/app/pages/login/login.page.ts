@@ -1,8 +1,26 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
 import { Router } from '@angular/router';
+
+import {
+  IonContent,
+  IonIcon
+} from '@ionic/angular/standalone';
+
+import { addIcons } from 'ionicons';
+import {
+  eyeOutline,
+  eyeOffOutline,
+  lockClosedOutline,
+  mailOutline,
+  personOutline,
+  shieldCheckmarkOutline,
+  arrowForwardOutline,
+  alertCircleOutline,
+  sparklesOutline
+} from 'ionicons/icons';
+
 import { SupabaseService } from '../../services/supabase.service';
 
 @Component({
@@ -13,13 +31,15 @@ import { SupabaseService } from '../../services/supabase.service';
   imports: [
     CommonModule,
     FormsModule,
-    IonicModule
+    IonContent,
+    IonIcon
   ]
 })
 export class LoginPage {
 
   email = '';
   senha = '';
+  mostrarSenha = false;
 
   carregando = false;
   erro = '';
@@ -27,42 +47,64 @@ export class LoginPage {
   constructor(
     private supabaseService: SupabaseService,
     private router: Router
-  ) {}
+  ) {
+    addIcons({
+      eyeOutline,
+      eyeOffOutline,
+      lockClosedOutline,
+      mailOutline,
+      personOutline,
+      shieldCheckmarkOutline,
+      arrowForwardOutline,
+      alertCircleOutline,
+      sparklesOutline
+    });
+  }
+
+  toggleMostrarSenha() {
+    this.mostrarSenha = !this.mostrarSenha;
+  }
 
   async entrar() {
-
     this.erro = '';
 
-    if (!this.email || !this.senha) {
-      this.erro = 'Preencha o e-mail e a senha.';
+    const emailFormatado = this.email.trim().toLowerCase();
+
+    if (!emailFormatado || !this.senha) {
+      this.erro = 'Por favor, preencha seu e-mail e sua senha.';
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailFormatado)) {
+      this.erro = 'Informe um endereço de e-mail válido.';
       return;
     }
 
     this.carregando = true;
 
     try {
-
       await this.supabaseService.login(
-        this.email,
+        emailFormatado,
         this.senha
       );
-
-      console.log('Login realizado com sucesso!');
 
       await this.router.navigate(['/dashboard']);
 
     } catch (error: any) {
-
       console.error('Erro ao fazer login:', error);
 
-      this.erro =
-        error?.message ||
-        'Não foi possível fazer login.';
+      const msg = (error?.message || '').toLowerCase();
+      if (msg.includes('invalid login credentials') || msg.includes('invalid_credentials')) {
+        this.erro = 'E-mail ou senha incorretos. Verifique suas credenciais.';
+      } else if (msg.includes('email not confirmed')) {
+        this.erro = 'Por favor, confirme seu e-mail para acessar a conta.';
+      } else {
+        this.erro = error?.message || 'Não foi possível fazer login. Tente novamente.';
+      }
 
     } finally {
-
       this.carregando = false;
-
     }
   }
 

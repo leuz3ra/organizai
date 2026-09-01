@@ -1,63 +1,91 @@
 <ion-content [fullscreen]="true">
 
-  <div class="login-container">
+  <div class="auth-page-wrap">
 
-    <div class="logo-area">
-      <h1>OrganizAí</h1>
-      <p>Organize sua vida financeira</p>
+    <!-- BANNER PANORÂMICO NO TOPO COM PROFUNDIDADE -->
+    <div class="auth-top-banner">
+      <div class="banner-bg" [style.background-image]="'url(assets/auth_banner.jpg)'"></div>
+      <div class="banner-gradient"></div>
+
+      <div class="banner-content">
+        <div class="banner-brand">
+          <img src="assets/icon.png" alt="OrganizAí" class="banner-brand-logo">
+          <span class="banner-brand-name">OrganizAí</span>
+        </div>
+        <h1 class="banner-tagline">Suas Finanças em Alto Nível</h1>
+        <p class="banner-subline">Gerencie metas, acompanhe rendimentos e tome o controle.</p>
+      </div>
     </div>
 
-    <div class="login-card">
+    <!-- CARD DE LOGIN SOBREPOSTO -->
+    <div class="auth-card-container">
+      <div class="auth-card-box">
 
-      <h2>Entrar</h2>
+        <div class="form-header">
+          <h2>Acesse sua conta</h2>
+          <p>Digite seu e-mail e senha para entrar no painel</p>
+        </div>
 
-      <ion-input
-        label="E-mail"
-        label-placement="floating"
-        fill="outline"
-        type="email"
-        [(ngModel)]="email"
-        placeholder="seu@email.com">
-      </ion-input>
+        <form (ngSubmit)="entrar()" class="form-body">
 
-      <ion-input
-        label="Senha"
-        label-placement="floating"
-        fill="outline"
-        type="password"
-        [(ngModel)]="senha"
-        placeholder="Digite sua senha">
-      </ion-input>
+          <!-- E-MAIL -->
+          <div class="input-field">
+            <label>Endereço de E-mail</label>
+            <div class="input-box">
+              <ion-icon name="mail-outline" class="field-icon"></ion-icon>
+              <input
+                type="email"
+                [(ngModel)]="email"
+                name="email"
+                placeholder="seu.email@exemplo.com"
+                autocomplete="email"
+                required>
+            </div>
+          </div>
 
-      <div
-        class="erro"
-        *ngIf="erro">
-        {{ erro }}
+          <!-- SENHA -->
+          <div class="input-field">
+            <label>Sua Senha</label>
+            <div class="input-box">
+              <ion-icon name="lock-closed-outline" class="field-icon"></ion-icon>
+              <input
+                [type]="mostrarSenha ? 'text' : 'password'"
+                [(ngModel)]="senha"
+                name="senha"
+                placeholder="Digite sua senha"
+                autocomplete="current-password"
+                required>
+              <button type="button" class="btn-toggle-pass" (click)="toggleMostrarSenha()">
+                <ion-icon [name]="mostrarSenha ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+              </button>
+            </div>
+          </div>
+
+          <!-- MENSAGEM DE ERRO -->
+          <div class="msg-alert msg-erro" *ngIf="erro">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            <span>{{ erro }}</span>
+          </div>
+
+          <!-- BOTÃO PRINCIPAL -->
+          <button
+            type="submit"
+            class="btn-auth-submit"
+            [disabled]="carregando">
+            <div class="spinner-auth" *ngIf="carregando"></div>
+            <span *ngIf="!carregando">Entrar no OrganizAí</span>
+            <ion-icon name="arrow-forward-outline" *ngIf="!carregando"></ion-icon>
+          </button>
+
+          <!-- LINK PARA CADASTRO -->
+          <div class="switch-auth-link">
+            <span>Ainda não possui uma conta?</span>
+            <button type="button" (click)="irParaCadastro()">Criar conta gratuita</button>
+          </div>
+
+        </form>
+
       </div>
-
-      <ion-button
-        expand="block"
-        (click)="entrar()"
-        [disabled]="carregando">
-
-        {{ carregando ? 'Entrando...' : 'Entrar' }}
-
-      </ion-button>
-
-      <div class="cadastro-link">
-
-        <span>Ainda não possui uma conta?</span>
-
-        <button
-          type="button"
-          (click)="irParaCadastro()">
-
-          Criar conta
-
-        </button>
-
-      </div>
-
     </div>
 
   </div>

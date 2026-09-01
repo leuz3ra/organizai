@@ -1,17 +1,25 @@
 import { Injectable } from '@angular/core';
 
 import { SupabaseService } from './supabase.service';
-
 import { Renda } from '../models/renda.model';
 
+export function parseNum(val: any): number {
+  if (val === null || val === undefined || val === '') return 0;
+  if (typeof val === 'number') return isNaN(val) ? 0 : val;
+  let s = String(val).replace(/\s/g, '').replace(/R\$/gi, '').trim();
+  if (s.includes(',') && s.includes('.')) {
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else if (s.includes(',')) {
+    s = s.replace(',', '.');
+  }
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
 
 @Injectable({
   providedIn: 'root'
 })
-
-
 export class RendasService {
-
 
   constructor(
     private supabaseService: SupabaseService
@@ -23,114 +31,48 @@ export class RendasService {
   // =====================================================
 
   async listarRendas(): Promise<Renda[]> {
-
     const {
       data: { user },
       error: userError
-    } =
-      await this.supabaseService.supabase.auth.getUser();
+    } = await this.supabaseService.supabase.auth.getUser();
 
-
-    if (userError) {
-
-      console.error(
-        'Erro ao obter usuário:',
-        userError
-      );
-
-      throw userError;
-
+    if (userError || !user) {
+      throw new Error('Usuário não está autenticado no Supabase.');
     }
 
-
-    if (!user) {
-
-      throw new Error(
-        'Usuário não está autenticado no Supabase.'
-      );
-
-    }
-
-
-    const {
-      data,
-      error
-    } =
+    const { data, error } =
       await this.supabaseService.supabase
-
         .from('rendas')
-
         .select('*')
-
-        .eq(
-          'user_id',
-          user.id
-        )
-
-        .order(
-          'created_at',
-          {
-            ascending: false
-          }
-        );
-
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
     if (error) {
-
-      console.error(
-        'Erro ao listar investimentos:',
-        error
-      );
-
+      console.error('Erro ao listar investimentos:', error);
       throw error;
-
     }
 
+    return (data || []).map((item: any) => {
+      const valor = parseNum(item.valor_investido);
+      const taxa = parseNum(item.percentual_rendimento);
+      const rendimento = parseNum(item.rendimento);
+      const saldo = parseNum(item.saldo_atual) || valor;
 
-    /*
-     * Converte os valores que vêm do Supabase
-     * para números reais.
-     *
-     * Isso evita o problema de aparecer somente
-     * "R$" quando o valor vem como texto.
-     */
-
-    const investimentos =
-      (data || []).map(
-        (item: any) => {
-
-          return {
-
-            ...item,
-
-            valor_investido:
-              this.converterNumero(
-                item.valor_investido
-              ),
-
-            percentual_rendimento:
-              this.converterNumero(
-                item.percentual_rendimento
-              ),
-
-            rendimento:
-              this.converterNumero(
-                item.rendimento
-              ),
-
-            saldo_atual:
-              this.converterNumero(
-                item.saldo_atual
-              )
-
-          } as Renda;
-
-        }
-      );
-
-
-    return investimentos;
-
+      return {
+        id: item.id,
+        titulo: item.titulo,
+        categoria: item.categoria || 'Investimento',
+        tipo_investimento: item.tipo_investimento,
+        valor_investido: valor,
+        percentual_rendimento: taxa,
+        rendimento: rendimento,
+        saldo_atual: saldo,
+        data_recebimento: item.data_recebimento,
+        descricao: item.descricao || null,
+        user_id: item.user_id,
+        created_at: item.created_at
+      } as Renda;
+    });
   }
 
 
@@ -138,187 +80,58 @@ export class RendasService {
   // SALVAR NOVO INVESTIMENTO
   // =====================================================
 
-  async salvarRenda(
-    renda: Renda
-  ): Promise<Renda> {
-
-
+  async salvarRenda(renda: Renda): Promise<Renda> {
     const {
       data: { user },
       error: userError
-    } =
-      await this.supabaseService.supabase.auth.getUser();
+    } = await this.supabaseService.supabase.auth.getUser();
 
-
-    if (userError) {
-
-      console.error(
-        'Erro ao obter usuário:',
-        userError
-      );
-
-      throw userError;
-
+    if (userError || !user) {
+      throw new Error('Usuário não está autenticado no Supabase.');
     }
 
-
-    if (!user) {
-
-      throw new Error(
-        'Usuário não está autenticado no Supabase.'
-      );
-
-    }
-
-
-    // ===================================================
-    // VALORES
-    // ===================================================
-
-    const valorInvestido =
-      this.converterNumero(
-        renda.valor_investido
-      );
-
-
-    const percentual =
-      this.converterNumero(
-        renda.percentual_rendimento
-      );
-
-
-    /*
-     * Um investimento recém-criado deve começar
-     * com rendimento praticamente zero.
-     *
-     * O cálculo completo será feito pela página
-     * de investimentos usando a data da aplicação.
-     */
-
-    const rendimentoInicial = 0;
-
-
-    const saldoInicial =
-      valorInvestido;
-
-
-    // ===================================================
-    // DADOS PARA O SUPABASE
-    // ===================================================
+    const valorInvestido = parseNum(renda.valor_investido);
+    const percentual = parseNum(renda.percentual_rendimento);
 
     const investimento = {
-
-      titulo:
-        renda.titulo,
-
-
-      categoria:
-        renda.categoria || 'Investimento',
-
-
-      tipo_investimento:
-        renda.tipo_investimento,
-
-
-      valor_investido:
-        valorInvestido,
-
-
-      percentual_rendimento:
-        percentual,
-
-
-      rendimento:
-        rendimentoInicial,
-
-
-      saldo_atual:
-        saldoInicial,
-
-
-      data_recebimento:
-        renda.data_recebimento,
-
-
-      descricao:
-        renda.descricao || null,
-
-
-      user_id:
-        user.id
-
+      titulo: renda.titulo.trim(),
+      categoria: renda.categoria || 'Investimento',
+      tipo_investimento: renda.tipo_investimento.trim(),
+      valor_investido: valorInvestido,
+      percentual_rendimento: percentual,
+      rendimento: 0,
+      saldo_atual: valorInvestido,
+      data_recebimento: renda.data_recebimento,
+      descricao: renda.descricao?.trim() || null,
+      user_id: user.id
     };
 
-
-    console.log(
-      'Dados enviados para o Supabase:',
-      investimento
-    );
-
-
-    // ===================================================
-    // INSERT
-    // ===================================================
-
-    const {
-      data,
-      error
-    } =
+    const { data, error } =
       await this.supabaseService.supabase
-
         .from('rendas')
-
-        .insert([
-          investimento
-        ])
-
+        .insert([investimento])
         .select()
-
         .single();
 
-
     if (error) {
-
-      console.error(
-        'Erro ao salvar investimento:',
-        error
-      );
-
+      console.error('Erro ao salvar investimento:', error);
       throw error;
-
     }
 
-
-    /*
-     * Retorna os dados já normalizados.
-     */
-
     return {
-
-      ...data,
-
-      valor_investido:
-        this.converterNumero(
-          data.valor_investido
-        ),
-
-      percentual_rendimento:
-        this.converterNumero(
-          data.percentual_rendimento
-        ),
-
-      rendimento:
-        this.converterNumero(
-          data.rendimento
-        ),
-
-      saldo_atual:
-        this.converterNumero(
-          data.saldo_atual
-        )
-
+      id: data.id,
+      titulo: data.titulo,
+      categoria: data.categoria,
+      tipo_investimento: data.tipo_investimento,
+      valor_investido: parseNum(data.valor_investido),
+      percentual_rendimento: parseNum(data.percentual_rendimento),
+      rendimento: parseNum(data.rendimento),
+      saldo_atual: parseNum(data.saldo_atual),
+      data_recebimento: data.data_recebimento,
+      descricao: data.descricao,
+      user_id: data.user_id,
+      created_at: data.created_at
     } as Renda;
-
   }
 
 
@@ -326,70 +139,27 @@ export class RendasService {
   // EDITAR INVESTIMENTO
   // =====================================================
 
-  async editarRenda(
-    id: string,
-    renda: Partial<Renda>
-  ): Promise<Renda> {
-
-
-    const {
-      data,
-      error
-    } =
+  async editarRenda(id: string, renda: Partial<Renda>): Promise<Renda> {
+    const { data, error } =
       await this.supabaseService.supabase
-
         .from('rendas')
-
         .update(renda)
-
-        .eq(
-          'id',
-          id
-        )
-
+        .eq('id', id)
         .select()
-
         .single();
 
-
     if (error) {
-
-      console.error(
-        'Erro ao editar investimento:',
-        error
-      );
-
+      console.error('Erro ao editar investimento:', error);
       throw error;
-
     }
 
-
     return {
-
       ...data,
-
-      valor_investido:
-        this.converterNumero(
-          data.valor_investido
-        ),
-
-      percentual_rendimento:
-        this.converterNumero(
-          data.percentual_rendimento
-        ),
-
-      rendimento:
-        this.converterNumero(
-          data.rendimento
-        ),
-
-      saldo_atual:
-        this.converterNumero(
-          data.saldo_atual
-        )
-
+      valor_investido: parseNum(data.valor_investido),
+      percentual_rendimento: parseNum(data.percentual_rendimento),
+      rendimento: parseNum(data.rendimento),
+      saldo_atual: parseNum(data.saldo_atual)
     } as Renda;
-
   }
 
 
@@ -397,141 +167,17 @@ export class RendasService {
   // EXCLUIR INVESTIMENTO
   // =====================================================
 
-  async excluirRenda(
-    id: string
-  ): Promise<void> {
-
-
-    const {
-      error
-    } =
+  async excluirRenda(id: string): Promise<void> {
+    const { error } =
       await this.supabaseService.supabase
-
         .from('rendas')
-
         .delete()
-
-        .eq(
-          'id',
-          id
-        );
-
+        .eq('id', id);
 
     if (error) {
-
-      console.error(
-        'Erro ao excluir investimento:',
-        error
-      );
-
+      console.error('Erro ao excluir investimento:', error);
       throw error;
-
     }
-
-  }
-
-
-  // =====================================================
-  // CONVERTER VALOR PARA NUMBER
-  // =====================================================
-
-  private converterNumero(
-    valor: any
-  ): number {
-
-
-    if (
-      valor === null ||
-      valor === undefined ||
-      valor === ''
-    ) {
-
-      return 0;
-
-    }
-
-
-    if (
-      typeof valor === 'number'
-    ) {
-
-      return isNaN(valor)
-        ? 0
-        : valor;
-
-    }
-
-
-    let texto =
-      String(valor)
-        .trim()
-        .replace(/\s/g, '');
-
-
-    /*
-     * Remove R$
-     */
-
-    texto =
-      texto
-        .replace(
-          /R\$/gi,
-          ''
-        )
-        .trim();
-
-
-    /*
-     * 1.500,50
-     * ↓
-     * 1500.50
-     */
-
-    if (
-      texto.includes('.') &&
-      texto.includes(',')
-    ) {
-
-      texto =
-        texto
-          .replace(
-            /\./g,
-            ''
-          )
-          .replace(
-            ',',
-            '.'
-          );
-
-    }
-
-    /*
-     * 1500,50
-     * ↓
-     * 1500.50
-     */
-
-    else if (
-      texto.includes(',')
-    ) {
-
-      texto =
-        texto.replace(
-          ',',
-          '.'
-        );
-
-    }
-
-
-    const numero =
-      parseFloat(texto);
-
-
-    return isNaN(numero)
-      ? 0
-      : numero;
-
   }
 
 }
