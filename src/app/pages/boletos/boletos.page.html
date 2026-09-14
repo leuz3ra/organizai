@@ -1,0 +1,122 @@
+<ion-content [fullscreen]="true">
+  <div class="topo">
+    <div class="topo-left">
+      <ion-icon name="arrow-back-outline" class="btn-voltar" (click)="voltar()"></ion-icon>
+      <div class="topo-logo">
+        <img src="assets/icon.png" alt="OrganizAí">
+        <span>Boletos</span>
+      </div>
+    </div>
+    <button class="btn-add" (click)="abrirModal()">
+      <ion-icon name="add-outline"></ion-icon>
+      Novo
+    </button>
+  </div>
+
+  <!-- RESUMO -->
+  <div class="resumo-strip">
+    <div class="res-item res-item--danger">
+      <span>Em aberto</span>
+      <strong>{{ fmtMoeda(totalEmAberto) }}</strong>
+    </div>
+    <div class="res-sep"></div>
+    <div class="res-item res-item--success">
+      <span>Pagos</span>
+      <strong>{{ fmtMoeda(totalPago) }}</strong>
+    </div>
+    <div class="res-sep"></div>
+    <div class="res-item res-item--danger" *ngIf="cnt['vencido'] > 0">
+      <span>⚠️ Vencidos</span>
+      <strong>{{ cnt['vencido'] }}</strong>
+    </div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filtros-scroll">
+    <div class="filtros">
+      <button class="filtro-btn" [class.ativo]="filtro==='todos'"    (click)="setFiltro('todos')">Todos <span class="fbadge">{{ cnt['todos'] }}</span></button>
+      <button class="filtro-btn filtro-btn--v" [class.ativo]="filtro==='vencido'"  (click)="setFiltro('vencido')">Vencidos <span class="fbadge">{{ cnt['vencido'] }}</span></button>
+      <button class="filtro-btn filtro-btn--p" [class.ativo]="filtro==='pendente'" (click)="setFiltro('pendente')">Pendentes <span class="fbadge">{{ cnt['pendente'] }}</span></button>
+      <button class="filtro-btn filtro-btn--ok" [class.ativo]="filtro==='pago'"   (click)="setFiltro('pago')">Pagos <span class="fbadge">{{ cnt['pago'] }}</span></button>
+    </div>
+  </div>
+
+  <!-- EMPTY -->
+  <div class="empty-state" *ngIf="filtrados.length === 0">
+    <ion-icon name="document-text-outline" class="empty-icon"></ion-icon>
+    <h3>Nenhum boleto</h3>
+    <p>Adicione boletos e pagamentos avulsos para controlar seus vencimentos.</p>
+    <button class="btn btn--primary btn--md" (click)="abrirModal()">
+      <ion-icon name="add-outline"></ion-icon>
+      Adicionar Boleto
+    </button>
+  </div>
+
+  <!-- LISTA -->
+  <div class="lista" *ngIf="filtrados.length > 0">
+    <div class="boleto-card" *ngFor="let b of filtrados"
+         [class.pago]="b.status==='pago'"
+         [class.vencido]="b.status==='vencido'">
+      <div class="boleto-main" (click)="togglePago(b)">
+        <div class="boleto-check">
+          <ion-icon [name]="b.status==='pago' ? 'checkmark-circle-outline' : 'ellipse-outline'"
+                    [class.icon-pago]="b.status==='pago'"
+                    [class.icon-vencido]="b.status==='vencido'"></ion-icon>
+        </div>
+        <div class="boleto-info">
+          <h4>{{ b.descricao }}</h4>
+          <div class="boleto-meta">
+            <ion-icon name="calendar-outline"></ion-icon>
+            <span class="venc-txt"
+              [class.txt-vencido]="b.status==='vencido'"
+              [class.txt-hoje]="getDias(b.vencimento)===0 && b.status!=='pago'"
+              [class.txt-pago]="b.status==='pago'">
+              {{ b.status === 'pago' ? 'Pago em ' + fmtData(b.vencimento) : (getTextoVenc(b) + ' (' + fmtData(b.vencimento) + ')') }}
+            </span>
+          </div>
+        </div>
+        <div class="boleto-valor-area">
+          <strong class="boleto-valor" [class.valor-pago]="b.status==='pago'">{{ fmtMoeda(b.valor) }}</strong>
+        </div>
+      </div>
+      <button class="btn-del" (click)="iniciarExcluir(b.id, $event)">
+        <ion-icon name="trash-outline"></ion-icon>
+      </button>
+    </div>
+  </div>
+  <div style="height:48px"></div>
+
+  <!-- MODAL NOVO BOLETO -->
+  <div class="overlay" *ngIf="mostrarModal" (click)="fecharModal()">
+    <div class="bottom-sheet" (click)="$event.stopPropagation()">
+      <div class="bottom-sheet__handle"></div>
+      <div class="bottom-sheet__header">
+        <h2>Novo Boleto</h2>
+        <button (click)="fecharModal()"><ion-icon name="close-outline"></ion-icon></button>
+      </div>
+      <div class="bottom-sheet__body">
+        <div class="field"><label>Descrição *</label><input type="text" placeholder="Ex: IPTU, Mensalidade..." [(ngModel)]="novaForm.descricao" maxlength="60"></div>
+        <div class="field"><label>Valor (R$) *</label><input type="number" placeholder="0,00" [(ngModel)]="novaForm.valor" min="0.01" step="0.01"></div>
+        <div class="field"><label>Vencimento *</label><input type="date" [(ngModel)]="novaForm.vencimento"></div>
+        <p class="form-error" *ngIf="erroForm">{{ erroForm }}</p>
+      </div>
+      <div class="bottom-sheet__footer">
+        <button class="btn btn--secondary btn--md btn--full" (click)="fecharModal()">Cancelar</button>
+        <button class="btn btn--primary btn--md btn--full" (click)="salvar()"><ion-icon name="add-outline"></ion-icon>Adicionar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIRMAÇÃO -->
+  <div class="modal-center" *ngIf="mostrarConfirmacao" (click)="cancelarExclusao()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-icon">🗑️</div>
+      <h3>Excluir Boleto?</h3>
+      <p>Esta ação não pode ser desfeita.</p>
+      <div class="modal-actions">
+        <button class="btn btn--secondary btn--md btn--full" (click)="cancelarExclusao()">Cancelar</button>
+        <button class="btn btn--danger btn--md btn--full" (click)="confirmarExclusao()">Excluir</button>
+      </div>
+    </div>
+  </div>
+</ion-content>

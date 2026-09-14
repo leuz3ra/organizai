@@ -1,0 +1,106 @@
+<ion-content [fullscreen]="true">
+
+  <!-- TOPO -->
+  <div class="topo">
+    <div class="topo-left">
+      <ion-icon name="arrow-back-outline" class="btn-voltar" (click)="voltar()"></ion-icon>
+      <div class="topo-logo">
+        <img src="assets/icon.png" alt="OrganizAí">
+        <span>Pagamentos</span>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- HERO RESUMO -->
+  <div class="hero">
+    <p class="hero-label">Total em aberto este mês</p>
+    <h2 class="hero-valor">{{ formatarMoeda(totalGeral) }}</h2>
+    <p class="hero-sub">Assinaturas + Boletos + Contas Fixas</p>
+  </div>
+
+
+  <!-- MINI RESUMO -->
+  <div class="mini-resumo">
+    <div class="mini-item">
+      <span class="mini-label">Assinaturas</span>
+      <strong class="mini-valor mini-valor--purple">{{ formatarMoeda(totalAssinaturas) }}/mês</strong>
+    </div>
+    <div class="mini-sep"></div>
+    <div class="mini-item">
+      <span class="mini-label">Boletos</span>
+      <strong class="mini-valor mini-valor--danger">{{ formatarMoeda(totalBoletos) }}</strong>
+    </div>
+    <div class="mini-sep"></div>
+    <div class="mini-item">
+      <span class="mini-label">Contas Fixas</span>
+      <strong class="mini-valor mini-valor--amber">{{ formatarMoeda(totalContasFixas) }}</strong>
+    </div>
+  </div>
+
+
+  <!-- SEÇÃO CATEGORIAS -->
+  <p class="section-label">Categorias</p>
+
+  <div class="categorias-grid">
+
+    <!-- ASSINATURAS -->
+    <div class="cat-card cat-card--purple" (click)="irParaAssinaturas()">
+      <div class="cat-card__top">
+        <div class="cat-card__icon-wrap">
+          <ion-icon name="tv-outline"></ion-icon>
+        </div>
+        <ion-icon name="arrow-forward-outline" class="cat-card__arrow"></ion-icon>
+      </div>
+      <h3>Assinaturas</h3>
+      <p>Netflix, Spotify, Disney+<br>e outros serviços recorrentes</p>
+      <div class="cat-card__valor">
+        <span>Mensal estimado</span>
+        <strong>{{ formatarMoeda(totalAssinaturas) }}</strong>
+      </div>
+    </div>
+
+    <!-- BOLETOS -->
+    <div class="cat-card cat-card--danger" (click)="irParaBoletos()">
+      <div class="cat-card__top">
+        <div class="cat-card__icon-wrap">
+          <ion-icon name="document-text-outline"></ion-icon>
+        </div>
+        <ion-icon name="arrow-forward-outline" class="cat-card__arrow"></ion-icon>
+      </div>
+      <h3>Boletos</h3>
+      <p>Pagamentos avulsos<br>com data de vencimento</p>
+      <div class="cat-card__valor">
+        <span>Em aberto</span>
+        <strong>{{ formatarMoeda(totalBoletos) }}</strong>
+      </div>
+    </div>
+
+    <!-- CONTAS FIXAS -->
+    <div class="cat-card cat-card--amber" (click)="irParaContasFixas()">
+      <div class="cat-card__top">
+        <div class="cat-card__icon-wrap">
+          <ion-icon name="home-outline"></ion-icon>
+        </div>
+        <ion-icon name="arrow-forward-outline" class="cat-card__arrow"></ion-icon>
+      </div>
+      <h3>Contas Fixas</h3>
+      <p>Aluguel, água, energia<br>e outras despesas mensais</p>
+      <div class="cat-card__valor">
+        <span>Em aberto</span>
+        <strong>{{ formatarMoeda(totalContasFixas) }}</strong>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- DICA RÁPIDA -->
+  <div class="dica-box">
+    <ion-icon name="trending-up-outline"></ion-icon>
+    <p>💡 <strong>Dica:</strong> Revise suas assinaturas mensalmente. Muitas pessoas pagam por serviços que mal usam!</p>
+  </div>
+
+  <div style="height: 48px;"></div>
+
+</ion-content>

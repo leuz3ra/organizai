@@ -342,8 +342,8 @@ export class DashboardPage implements OnInit {
     this.mostrarLogout = false;
   }
 
-  abrirRendas() {
-    this.router.navigate(['/rendas']);
+  abrirVisaoGeral() {
+    this.router.navigate(['/visao-geral']);
   }
 
   abrirMetas() {
@@ -351,11 +351,11 @@ export class DashboardPage implements OnInit {
   }
 
   abrirPagamentos() {
-    alert('Tela de Pagamentos em desenvolvimento.');
+    this.router.navigate(['/pagamentos']);
   }
 
   abrirDicas() {
-    alert('Tela de Dicas em desenvolvimento.');
+    this.router.navigate(['/dicas']);
   }
 
 }

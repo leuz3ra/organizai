@@ -1,0 +1,168 @@
+<ion-content [fullscreen]="true">
+  <div class="topo">
+    <div class="topo-left">
+      <ion-icon name="arrow-back-outline" class="btn-voltar" (click)="voltar()"></ion-icon>
+      <div class="topo-logo">
+        <img src="assets/icon.png" alt="OrganizAí">
+        <span>Visão Geral</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="salario-card">
+    <div class="salario-header">
+      <div class="sal-icon"><ion-icon name="wallet-outline"></ion-icon></div>
+      <h3>Renda Mensal</h3>
+    </div>
+    
+    <div class="salario-input-area" *ngIf="editandoSalario">
+      <p class="salario-hint">Informe sua renda para podermos analisar seus gastos e sugerir estratégias.</p>
+      <div class="input-group">
+        <span class="currency">R$</span>
+        <input type="number" [(ngModel)]="salarioInput" placeholder="0.00">
+        <button class="btn btn--primary" (click)="salvarSalario()">Salvar</button>
+      </div>
+    </div>
+
+    <div class="salario-display" *ngIf="!editandoSalario">
+      <h2>{{ fmt(rendaMensal) }}</h2>
+      <button class="btn-edit" (click)="editandoSalario = true">Editar</button>
+    </div>
+  </div>
+
+  <div class="resumo-container" *ngIf="!editandoSalario && rendaMensal > 0">
+    
+    <!-- GRÁFICO COMPROMETIMENTO -->
+    <div class="grafico-resumo">
+      <div class="grafico-bar">
+        <div class="grafico-fill" [style.width]="percentualComprometido + '%'"
+             [class.danger]="percentualComprometido > 85"
+             [class.warning]="percentualComprometido > 60 && percentualComprometido <= 85"
+             [class.success]="percentualComprometido <= 60"></div>
+      </div>
+      <div class="grafico-labels">
+        <span>{{ percentualComprometido }}% Comprometido</span>
+        <span>{{ fmt(saldoRestante) }} Livre</span>
+      </div>
+    </div>
+
+    <div class="dicas-box" [ngClass]="percentualComprometido > 90 ? 'dica-danger' : (percentualComprometido > 60 ? 'dica-warning' : 'dica-success')">
+      <ion-icon name="bulb-outline"></ion-icon>
+      <div class="dica-content">
+        <h4>Análise Inteligente</h4>
+        <p *ngIf="percentualComprometido <= 60">Você está com uma ótima folga no orçamento! Considere transferir parte desse valor para Investimentos ou Metas futuras.</p>
+        <p *ngIf="percentualComprometido > 60 && percentualComprometido <= 85">Atenção aos gastos. Suas contas consomem boa parte da renda. Tente revisar suas assinaturas.</p>
+        <p *ngIf="percentualComprometido > 85">Alerta crítico! Suas contas estão muito altas em relação à sua renda. É recomendável cortar gastos não essenciais imediatamente.</p>
+      </div>
+    </div>
+
+    <h3 class="section-title">Onde seu dinheiro está indo?</h3>
+
+    <div class="detalhamento">
+      <div class="detalhe-item">
+        <div class="det-icon i-assin"><ion-icon name="pie-chart-outline"></ion-icon></div>
+        <div class="det-info">
+          <h5>Assinaturas</h5>
+          <p>Serviços recorrentes ativos</p>
+        </div>
+        <strong class="det-valor">{{ fmt(totalAssinaturas) }}</strong>
+      </div>
+      
+      <div class="detalhe-item">
+        <div class="det-icon i-contas"><ion-icon name="trending-up-outline"></ion-icon></div>
+        <div class="det-info">
+          <h5>Contas Fixas</h5>
+          <p>Moradia, energia, internet...</p>
+        </div>
+        <strong class="det-valor">{{ fmt(totalContasFixas) }}</strong>
+      </div>
+
+      <div class="detalhe-item">
+        <div class="det-icon i-boletos"><ion-icon name="alert-circle-outline"></ion-icon></div>
+        <div class="det-info">
+          <h5>Boletos</h5>
+          <p>Pendentes / Vencidos</p>
+        </div>
+        <strong class="det-valor">{{ fmt(totalBoletosPendentes) }}</strong>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <h3 class="section-title">Ferramentas & Operações Rápidas</h3>
+
+    <!-- REGRA 50 30 20 -->
+    <div class="operacao-card op-regra">
+      <div class="op-header">
+        <ion-icon name="pie-chart-outline"></ion-icon>
+        <h4>Regra 50 / 30 / 20</h4>
+      </div>
+      <p class="op-desc">Idealmente, sua renda deve ser dividida assim:</p>
+      <div class="regra-grid">
+        <div class="regra-item r-nec">
+          <span>50% Necessidades</span>
+          <strong>{{ fmt(regraNecessidades) }}</strong>
+        </div>
+        <div class="regra-item r-des">
+          <span>30% Desejos</span>
+          <strong>{{ fmt(regraDesejos) }}</strong>
+        </div>
+        <div class="regra-item r-fut">
+          <span>20% Futuro/Inv.</span>
+          <strong>{{ fmt(regraFuturo) }}</strong>
+        </div>
+      </div>
+      <p class="op-note" *ngIf="totalContasFixas > regraNecessidades">
+        ⚠️ Atenção: Suas Contas Fixas ({{ fmt(totalContasFixas) }}) já ultrapassam a meta de Necessidades.
+      </p>
+      <p class="op-note success" *ngIf="totalContasFixas <= regraNecessidades">
+        ✅ Muito bem! Suas Contas Fixas ({{ fmt(totalContasFixas) }}) cabem na meta de 50%.
+      </p>
+    </div>
+
+    <!-- RESERVA DE EMERGÊNCIA -->
+    <div class="operacao-card op-reserva">
+      <div class="op-header">
+        <ion-icon name="shield-checkmark-outline"></ion-icon>
+        <h4>Alvo da Reserva de Emergência</h4>
+      </div>
+      <p class="op-desc">Para ter segurança de 6 meses pagando suas Contas Fixas e Assinaturas, você precisa acumular:</p>
+      <h2 class="op-destaque">{{ fmt(metaReservaEmergencia) }}</h2>
+      <p class="op-hint">Isso cobre {{ fmt(totalContasFixas + totalAssinaturas) }} por mês durante meio ano sem renda.</p>
+    </div>
+
+    <!-- PRÓXIMOS VENCIMENTOS -->
+    <div class="operacao-card op-venc">
+      <div class="op-header">
+        <ion-icon name="calendar-outline"></ion-icon>
+        <h4>Radar: Próximos Vencimentos</h4>
+      </div>
+      <p class="op-desc" *ngIf="proximosVencimentos.length > 0">Atenção para estas contas nos próximos dias:</p>
+      <p class="op-desc" *ngIf="proximosVencimentos.length === 0">Ufa! Tudo pago ou sem cadastros pendentes.</p>
+      
+      <div class="venc-lista" *ngIf="proximosVencimentos.length > 0">
+        <div class="venc-item" *ngFor="let v of proximosVencimentos">
+          <div class="venc-info">
+            <span class="venc-nome">{{ v.nome }}</span>
+            <span class="venc-tipo" [class.t-conta]="v.tipo==='conta'" [class.t-boleto]="v.tipo==='boleto'">{{ v.tipo | titlecase }}</span>
+          </div>
+          <div class="venc-direita">
+            <strong class="venc-valor">{{ fmt(v.valor) }}</strong>
+            <span class="venc-dias" [class.vencido]="v.dias < 0" [class.hoje]="v.dias === 0">
+              {{ v.dias < 0 ? 'Vencido!' : v.dias === 0 ? 'Vence Hoje!' : 'Em ' + v.dias + ' dias' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="empty-state" *ngIf="!editandoSalario && rendaMensal === 0">
+    <ion-icon name="wallet-outline" class="empty-icon"></ion-icon>
+    <h3>Renda não informada</h3>
+    <p>Cadastre sua renda mensal acima para receber análises, dicas e usar as calculadoras automáticas.</p>
+  </div>
+
+  <div style="height:48px"></div>
+</ion-content>

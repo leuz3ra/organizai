@@ -1,0 +1,151 @@
+<ion-content [fullscreen]="true">
+  <div class="topo">
+    <div class="topo-left">
+      <ion-icon name="arrow-back-outline" class="btn-voltar" (click)="voltar()"></ion-icon>
+      <div class="topo-logo">
+        <img src="assets/icon.png" alt="OrganizAí">
+        <span>Contas Fixas</span>
+      </div>
+    </div>
+    <button class="btn-add" (click)="abrirModal()">
+      <ion-icon name="add-outline"></ion-icon>
+      Nova
+    </button>
+  </div>
+
+  <!-- HERO COM PROGRESSO -->
+  <div class="hero-cf">
+    <div class="hero-top">
+      <div>
+        <p class="hero-label">Total mensal</p>
+        <h2 class="hero-valor">{{ fmt(totalMensal) }}</h2>
+      </div>
+      <button class="btn-reset" (click)="resetarMes()" title="Resetar mês">
+        <ion-icon name="refresh-outline"></ion-icon>
+        Novo mês
+      </button>
+    </div>
+    <!-- BARRA DE PROGRESSO DO MÊS -->
+    <div class="prog-wrap">
+      <div class="prog-info">
+        <span>{{ contPagas }}/{{ contas.length }} pagas</span>
+        <span>{{ fmt(totalPago) }} de {{ fmt(totalMensal) }}</span>
+      </div>
+      <div class="prog-track">
+        <div class="prog-fill" [style.width]="progresso + '%'"></div>
+      </div>
+      <div class="prog-pct">{{ progresso }}% do mês concluído</div>
+    </div>
+  </div>
+
+  <!-- RESUMO STRIP -->
+  <div class="resumo-strip">
+    <div class="res-item res-item--amber">
+      <span>Em aberto</span>
+      <strong>{{ fmt(totalEmAberto) }}</strong>
+    </div>
+    <div class="res-sep"></div>
+    <div class="res-item res-item--success">
+      <span>Pagos</span>
+      <strong>{{ fmt(totalPago) }}</strong>
+    </div>
+  </div>
+
+  <!-- EMPTY -->
+  <div class="empty-state" *ngIf="contas.length === 0">
+    <ion-icon name="home-outline" class="empty-icon"></ion-icon>
+    <h3>Nenhuma conta fixa</h3>
+    <p>Adicione suas despesas mensais recorrentes como aluguel, água e energia.</p>
+    <button class="btn btn--primary btn--md" (click)="abrirModal()">
+      <ion-icon name="add-outline"></ion-icon>
+      Adicionar Conta
+    </button>
+  </div>
+
+  <!-- LISTA -->
+  <div class="lista" *ngIf="contas.length > 0">
+    <div class="cf-card" *ngFor="let c of contas"
+         [class.pago]="c.status==='pago'"
+         [style.--cat-cor]="getCatInfo(c.categoria).cor"
+         (click)="togglePago(c)">
+
+      <div class="cf-icone-wrap">
+        <ion-icon [name]="getCatInfo(c.categoria).icon"></ion-icon>
+      </div>
+
+      <div class="cf-info">
+        <h4>{{ c.descricao }}</h4>
+        <div class="cf-meta">
+          <ion-icon name="calendar-outline"></ion-icon>
+          <span>Todo dia {{ c.diaVencimento }}</span>
+          <span class="sep">·</span>
+          <span *ngIf="c.status === 'pendente'" class="dias-rest">{{ getProximoVenc(c) }} ({{ getDiasParaVencer(c) }}d)</span>
+          <span *ngIf="c.status === 'pago'" class="txt-pago">Pago este mês ✓</span>
+        </div>
+        <span class="cf-cat-label">{{ getCatInfo(c.categoria).label }}</span>
+      </div>
+
+      <div class="cf-direita">
+        <strong class="cf-valor" [class.valor-pago]="c.status==='pago'">{{ fmt(c.valor) }}</strong>
+        <div class="cf-check">
+          <ion-icon [name]="c.status==='pago' ? 'checkmark-circle-outline' : 'ellipse-outline'"
+                    [class.icon-pago]="c.status==='pago'"></ion-icon>
+        </div>
+        <button class="btn-del" (click)="iniciarExcluir(c.id, $event)">
+          <ion-icon name="trash-outline"></ion-icon>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="height:48px"></div>
+
+  <!-- MODAL NOVA CONTA FIXA -->
+  <div class="overlay" *ngIf="mostrarModal" (click)="fecharModal()">
+    <div class="bottom-sheet" (click)="$event.stopPropagation()">
+      <div class="bottom-sheet__handle"></div>
+      <div class="bottom-sheet__header">
+        <h2>Nova Conta Fixa</h2>
+        <button (click)="fecharModal()"><ion-icon name="close-outline"></ion-icon></button>
+      </div>
+      <div class="bottom-sheet__body">
+        <div class="field"><label>Descrição *</label><input type="text" placeholder="Ex: Aluguel, Água..." [(ngModel)]="novaForm.descricao" maxlength="50"></div>
+        <div class="form-row">
+          <div class="field" style="flex:1"><label>Valor (R$) *</label><input type="number" placeholder="0,00" [(ngModel)]="novaForm.valor" min="0.01" step="0.01"></div>
+          <div class="field" style="flex:1"><label>Dia Vencimento</label><input type="number" min="1" max="31" [(ngModel)]="novaForm.diaVencimento"></div>
+        </div>
+        <div class="field">
+          <label>Categoria</label>
+          <div class="cat-grid">
+            <button *ngFor="let cat of categorias" type="button"
+                    class="cat-chip" [class.ativo]="novaForm.categoria === cat.valor"
+                    [style.--chip-cor]="cat.cor"
+                    (click)="novaForm.categoria = cat.valor">
+              <ion-icon [name]="cat.icon"></ion-icon>
+              {{ cat.label }}
+            </button>
+          </div>
+        </div>
+        <p class="form-error" *ngIf="erroForm">{{ erroForm }}</p>
+      </div>
+      <div class="bottom-sheet__footer">
+        <button class="btn btn--secondary btn--md btn--full" (click)="fecharModal()">Cancelar</button>
+        <button class="btn btn--primary btn--md btn--full" (click)="salvar()"><ion-icon name="add-outline"></ion-icon>Adicionar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIRMAÇÃO -->
+  <div class="modal-center" *ngIf="mostrarConfirmacao" (click)="cancelarExclusao()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-icon">🗑️</div>
+      <h3>Excluir Conta Fixa?</h3>
+      <p>Esta ação não pode ser desfeita.</p>
+      <div class="modal-actions">
+        <button class="btn btn--secondary btn--md btn--full" (click)="cancelarExclusao()">Cancelar</button>
+        <button class="btn btn--danger btn--md btn--full" (click)="confirmarExclusao()">Excluir</button>
+      </div>
+    </div>
+  </div>
+</ion-content>

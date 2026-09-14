@@ -29,12 +29,12 @@
   <!-- ============================================= -->
   <div class="nav-cards">
 
-    <div class="nav-card" (click)="abrirRendas()">
+    <div class="nav-card" (click)="abrirVisaoGeral()">
       <div class="nav-card__icon">
-        <ion-icon name="wallet-outline"></ion-icon>
+        <ion-icon name="pie-chart-outline"></ion-icon>
       </div>
-      <h4>Investimentos</h4>
-      <p>Rendas e simulações</p>
+      <h4>Visão Geral</h4>
+      <p>Análise de renda e gastos</p>
       <ion-icon name="arrow-forward-outline" class="nav-card__arrow"></ion-icon>
     </div>
 
@@ -47,22 +47,22 @@
       <ion-icon name="arrow-forward-outline" class="nav-card__arrow"></ion-icon>
     </div>
 
-    <div class="nav-card nav-card--disabled" (click)="abrirPagamentos()">
+    <div class="nav-card" (click)="abrirPagamentos()">
       <div class="nav-card__icon">
         <ion-icon name="card-outline"></ion-icon>
       </div>
       <h4>Pagamentos</h4>
       <p>Boletos e contas</p>
-      <span class="nav-card__badge">Em breve</span>
+      <ion-icon name="arrow-forward-outline" class="nav-card__arrow"></ion-icon>
     </div>
 
-    <div class="nav-card nav-card--disabled" (click)="abrirDicas()">
+    <div class="nav-card" (click)="abrirDicas()">
       <div class="nav-card__icon">
         <ion-icon name="bulb-outline"></ion-icon>
       </div>
       <h4>Dicas</h4>
       <p>Educação financeira</p>
-      <span class="nav-card__badge">Em breve</span>
+      <ion-icon name="arrow-forward-outline" class="nav-card__arrow"></ion-icon>
     </div>
 
   </div>

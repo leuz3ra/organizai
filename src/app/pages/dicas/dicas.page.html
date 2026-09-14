@@ -1,0 +1,152 @@
+<ion-content [fullscreen]="true">
+
+  <!-- TOPO -->
+  <div class="topo">
+    <div class="topo-left">
+      <ion-icon name="arrow-back-outline" class="btn-voltar" (click)="voltar()"></ion-icon>
+      <div class="topo-logo">
+        <img src="assets/icon.png" alt="OrganizAí">
+        <span>Dicas & Quiz</span>
+      </div>
+    </div>
+    <button class="btn-salvas" [class.ativo]="apenasSalvas" (click)="apenasSalvas = !apenasSalvas">
+      <ion-icon [name]="apenasSalvas ? 'bookmark' : 'bookmark-outline'"></ion-icon>
+      <span *ngIf="totalSalvas > 0">{{ totalSalvas }}</span>
+    </button>
+  </div>
+
+  <!-- BUSCA -->
+  <div class="busca-wrap">
+    <div class="busca-input">
+      <ion-icon name="search-outline" class="busca-icon"></ion-icon>
+      <input type="text" placeholder="Buscar dica..." [(ngModel)]="termoBusca">
+      <ion-icon name="close-outline" class="busca-clear" *ngIf="termoBusca" (click)="termoBusca = ''"></ion-icon>
+    </div>
+  </div>
+
+  <!-- BANNER QUIZ -->
+  <div class="quiz-banner" *ngIf="!termoBusca && !apenasSalvas" (click)="abrirQuiz()">
+    <div class="quiz-banner-icon"><ion-icon name="trophy-outline"></ion-icon></div>
+    <div class="quiz-banner-text">
+      <h3>Quiz Financeiro!</h3>
+      <p>Teste seus conhecimentos e aprenda jogando.</p>
+    </div>
+    <button class="quiz-banner-btn">Jogar</button>
+  </div>
+
+  <p class="section-label" *ngIf="apenasSalvas">🔖 Dicas Salvas</p>
+  <p class="section-label" *ngIf="!apenasSalvas && termoBusca">Resultados para "{{ termoBusca }}"</p>
+  <p class="section-label" *ngIf="!apenasSalvas && !termoBusca">Todas as Dicas</p>
+
+  <!-- ESTADO VAZIO -->
+  <div class="empty-state" *ngIf="dicasFiltradas.length === 0">
+    <ion-icon name="bulb-outline" class="empty-icon"></ion-icon>
+    <h3 *ngIf="apenasSalvas">Nenhuma dica salva</h3>
+    <h3 *ngIf="!apenasSalvas">Nenhuma dica encontrada</h3>
+  </div>
+
+  <!-- LISTA DE DICAS -->
+  <div class="lista-dicas" *ngIf="dicasFiltradas.length > 0">
+    <div class="dica-card" *ngFor="let d of dicasFiltradas" (click)="abrirDica(d)">
+      <div class="dica-icone-wrap">
+        <ion-icon [name]="d.icon" class="dica-icone"></ion-icon>
+      </div>
+      <div class="dica-info">
+        <h4>{{ d.titulo }}</h4>
+        <p>{{ d.resumo }}</p>
+        <div class="dica-tags">
+          <span class="chip-cat chip--muted">{{ d.leitura }} min</span>
+        </div>
+      </div>
+      <div class="dica-acoes">
+        <button class="btn-bookmark-sm" (click)="toggleSalvar(d, $event)">
+          <ion-icon [name]="d.salva ? 'bookmark' : 'bookmark-outline'" [class.salvo]="d.salva"></ion-icon>
+        </button>
+        <ion-icon name="chevron-forward-outline" class="dica-seta"></ion-icon>
+      </div>
+    </div>
+  </div>
+
+  <div style="height: 48px;"></div>
+
+
+  <!-- MODAL DICA COMPLETA -->
+  <div class="overlay" *ngIf="dicaAberta" (click)="fecharDica()">
+    <div class="dica-sheet" (click)="$event.stopPropagation()">
+      <div class="dica-sheet__handle"></div>
+      
+      <div class="dica-sheet__header">
+        <div class="dica-sheet__header-top">
+          <button class="btn-fechar-sheet" (click)="fecharDica()"><ion-icon name="close-outline"></ion-icon></button>
+          <button class="btn-salvar-sheet" (click)="toggleSalvar(dicaAberta!)">
+            <ion-icon [name]="dicaAberta.salva ? 'bookmark' : 'bookmark-outline'" [class.salvo]="dicaAberta.salva"></ion-icon>
+            {{ dicaAberta.salva ? 'Salvo' : 'Salvar' }}
+          </button>
+        </div>
+        <div class="dica-sheet__icon-row">
+          <div class="dica-sheet__icone-bg"><ion-icon [name]="dicaAberta.icon"></ion-icon></div>
+        </div>
+        <h2>{{ dicaAberta.titulo }}</h2>
+        <p class="dica-sheet__resumo">{{ dicaAberta.resumo }}</p>
+      </div>
+
+      <div class="dica-sheet__body">
+        <div class="dica-conteudo" [innerHTML]="renderMarkdown(dicaAberta.conteudo)"></div>
+      </div>
+
+      <div class="dica-sheet__footer">
+        <button class="btn btn--secondary btn--md btn--full" (click)="fecharDica()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL QUIZ -->
+  <div class="overlay" *ngIf="mostrarQuizModal" (click)="fecharQuiz()">
+    <div class="quiz-modal" (click)="$event.stopPropagation()">
+      
+      <!-- Cabeçalho -->
+      <div class="quiz-header">
+        <ion-icon name="trophy-outline" class="quiz-icon-header"></ion-icon>
+        <h2>Quiz Financeiro</h2>
+        <button class="btn-close-quiz" (click)="fecharQuiz()"><ion-icon name="close-outline"></ion-icon></button>
+      </div>
+
+      <!-- Fase Perguntas -->
+      <div class="quiz-body" *ngIf="!quizFinalizado">
+        <p class="quiz-progress">Pergunta {{ quizIndex + 1 }} de {{ quizQuestions.length }}</p>
+        <h3 class="quiz-question">{{ quizQuestions[quizIndex].pergunta }}</h3>
+
+        <div class="quiz-options">
+          <button 
+            *ngFor="let opt of quizQuestions[quizIndex].opcoes; let i = index" 
+            class="quiz-option"
+            [ngClass]="{
+              'selected-correct': respostaSelecionada === i && quizCorreto,
+              'selected-wrong': respostaSelecionada === i && !quizCorreto,
+              'disabled': respostaSelecionada !== null && respostaSelecionada !== i,
+              'show-correct': respostaSelecionada !== null && i === quizQuestions[quizIndex].respostaCerta && respostaSelecionada !== i
+            }"
+            (click)="responder(i)"
+            [disabled]="respostaSelecionada !== null">
+            {{ opt }}
+            <ion-icon name="checkmark-circle" *ngIf="respostaSelecionada !== null && i === quizQuestions[quizIndex].respostaCerta"></ion-icon>
+            <ion-icon name="close-circle" *ngIf="respostaSelecionada === i && !quizCorreto"></ion-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- Fase Final -->
+      <div class="quiz-final" *ngIf="quizFinalizado">
+        <div class="quiz-trophy" [class.gold]="quizScore === quizQuestions.length">🏆</div>
+        <h3>Fim do Quiz!</h3>
+        <p>Você acertou <strong>{{ quizScore }}</strong> de {{ quizQuestions.length }} perguntas.</p>
+        <div class="quiz-message" *ngIf="quizScore === quizQuestions.length">Perfeito! Você entende muito de finanças! 🚀</div>
+        <div class="quiz-message" *ngIf="quizScore < quizQuestions.length">Continue lendo as dicas para aprender mais! 📚</div>
+        
+        <button class="btn btn--primary btn--full mt-4" (click)="fecharQuiz()">Voltar às Dicas</button>
+      </div>
+
+    </div>
+  </div>
+
+</ion-content>

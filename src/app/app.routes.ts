@@ -20,8 +20,8 @@ export const routes: Routes = [
     loadComponent: () => import('./dashboard/dashboard.page').then( m => m.DashboardPage)
   },
   {
-    path: 'rendas',
-    loadComponent: () => import('./pages/rendas/rendas.page').then( m => m.RendasPage)
+    path: 'visao-geral',
+    loadComponent: () => import('./pages/visao-geral/visao-geral.page').then(m => m.VisaoGeralPage)
   },
   {
     path: 'novo-investimento',
@@ -38,5 +38,25 @@ export const routes: Routes = [
   {
     path: 'metas',
     loadComponent: () => import('./pages/metas/metas.page').then( m => m.MetasPage)
+  },
+  {
+    path: 'pagamentos',
+    loadComponent: () => import('./pages/pagamentos/pagamentos.page').then( m => m.PagamentosPage)
+  },
+  {
+    path: 'dicas',
+    loadComponent: () => import('./pages/dicas/dicas.page').then( m => m.DicasPage)
+  },
+  {
+    path: 'assinaturas',
+    loadComponent: () => import('./pages/assinaturas/assinaturas.page').then( m => m.AssinaturasPage)
+  },
+  {
+    path: 'boletos',
+    loadComponent: () => import('./pages/boletos/boletos.page').then( m => m.BoletosPage)
+  },
+  {
+    path: 'contas-fixas',
+    loadComponent: () => import('./pages/contas-fixas/contas-fixas.page').then( m => m.ContasFixasPage)
   },
 ];

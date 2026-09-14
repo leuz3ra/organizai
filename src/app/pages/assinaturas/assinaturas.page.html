@@ -1,0 +1,261 @@
+<ion-content [fullscreen]="true">
+
+  <!-- TOPO -->
+  <div class="topo">
+    <div class="topo-left">
+      <ion-icon name="arrow-back-outline" class="btn-voltar" (click)="voltar()"></ion-icon>
+      <div class="topo-logo">
+        <img src="assets/icon.png" alt="OrganizAí">
+        <span>Assinaturas</span>
+      </div>
+    </div>
+    <button class="btn-add" (click)="abrirModal()">
+      <ion-icon name="add-outline"></ion-icon>
+      Nova
+    </button>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero-assin">
+    <div class="hero-main">
+      <div>
+        <p class="hero-label">Gasto mensal ativo</p>
+        <h2 class="hero-valor">{{ fmt(totalMensal) }}</h2>
+        <p class="hero-sub">{{ fmt(totalAnual) }}/ano · {{ contAtivas }} ativa(s)</p>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><strong>{{ contAtivas }}</strong><span>Ativas</span></div>
+        <div class="stat"><strong>{{ contPausadas }}</strong><span>Pausadas</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filtros-scroll">
+    <div class="filtros">
+      <button class="filtro-btn" [class.ativo]="filtroStatus==='todos'"    (click)="setFiltro('todos')">Todas</button>
+      <button class="filtro-btn" [class.ativo]="filtroStatus==='ativo'"    (click)="setFiltro('ativo')">Ativas</button>
+      <button class="filtro-btn" [class.ativo]="filtroStatus==='pausado'"  (click)="setFiltro('pausado')">Pausadas</button>
+      <button class="filtro-btn filtro-btn--cancel" [class.ativo]="filtroStatus==='cancelado'" (click)="setFiltro('cancelado')">Canceladas</button>
+    </div>
+  </div>
+
+  <!-- EMPTY -->
+  <div class="empty-state" *ngIf="filtradas.length === 0">
+    <div class="empty-icon">📺</div>
+    <h3>Nenhuma assinatura</h3>
+    <p>Adicione seus serviços recorrentes para acompanhar quanto gasta por mês.</p>
+    <button class="btn btn--primary btn--md" (click)="abrirModal()">
+      <ion-icon name="add-outline"></ion-icon>
+      Adicionar Serviço
+    </button>
+  </div>
+
+  <!-- LISTA -->
+  <div class="lista" *ngIf="filtradas.length > 0">
+    <div class="assín-card" *ngFor="let a of filtradas" [class.pausado]="a.status==='pausado'">
+
+      <!-- LOGO / EMOJI -->
+      <div class="assín-logo-wrap"
+           [style.background]="a.status==='pausado' ? '#F3F4F6' : 'transparent'"
+           [style.border-color]="a.status==='pausado' ? '#E5E7EB' : (a.cor + '30')">
+        <!-- Logo oficial -->
+        <img
+          *ngIf="a.logoUrl"
+          [src]="a.logoUrl"
+          [alt]="a.nome"
+          class="assín-logo-img"
+          (error)="onLogoError(a)">
+        <!-- Emoji (fallback ou serviço custom) -->
+        <span *ngIf="!a.logoUrl" class="assín-emoji-txt">{{ a.emoji }}</span>
+      </div>
+
+      <!-- INFO -->
+      <div class="assín-info">
+        <h4>{{ a.nome }}</h4>
+        <div class="assín-meta">
+          <span class="assín-cat">{{ a.categoria }}</span>
+          <span class="sep">·</span>
+          <ion-icon name="calendar-outline"></ion-icon>
+          <span>Dia {{ a.dataRenovacao }}</span>
+          <span *ngIf="a.status==='ativo'" class="dias-rest">· {{ getDiasParaRenovacao(a) }}d</span>
+        </div>
+        <p class="assín-ciclo-info">
+          {{ a.ciclo === 'anual' ? 'Anual → ' + fmt(valorMensal(a)) + '/mês' : (a.ciclo | titlecase) }}
+        </p>
+      </div>
+
+      <!-- VALOR + AÇÕES -->
+      <div class="assín-direita">
+        <strong class="assín-valor" [style.color]="a.status==='pausado' ? 'var(--c-text-muted)' : a.cor">
+          {{ fmt(a.valor) }}
+        </strong>
+        <span class="assín-ciclo-txt">{{ getLabelCiclo(a.ciclo) }}</span>
+        <div class="assín-btns">
+          <button class="btn-toggle" [class.pausado]="a.status==='pausado'" (click)="toggleStatus(a)">
+            <ion-icon [name]="a.status==='ativo' ? 'pause-outline' : 'play-outline'"></ion-icon>
+          </button>
+          <button class="btn-excluir" (click)="iniciarExcluir(a.id, $event)">
+            <ion-icon name="trash-outline"></ion-icon>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="height:48px"></div>
+
+
+  <!-- ======================================================== -->
+  <!-- MODAL NOVA ASSINATURA                                     -->
+  <!-- ======================================================== -->
+  <div class="overlay" *ngIf="mostrarModal" (click)="fecharModal()">
+    <div class="bottom-sheet" (click)="$event.stopPropagation()">
+      <div class="bottom-sheet__handle"></div>
+
+      <div class="bottom-sheet__header">
+        <h2>Nova Assinatura</h2>
+        <button (click)="fecharModal()"><ion-icon name="close-outline"></ion-icon></button>
+      </div>
+
+      <div class="bottom-sheet__body">
+
+        <!-- BOTÃO ABRIR SUGESTÕES -->
+        <button class="btn-sugestoes" type="button" (click)="mostrarSugestoes = !mostrarSugestoes">
+          <span>⚡ Escolher serviço popular</span>
+          <ion-icon [name]="mostrarSugestoes ? 'close-outline' : 'chevron-down-outline'"></ion-icon>
+        </button>
+
+        <!-- PAINEL DE SUGESTÕES COM LOGOS -->
+        <div class="sugestoes-painel" *ngIf="mostrarSugestoes">
+          <!-- Campo de busca -->
+          <div class="sugestoes-busca">
+            <ion-icon name="search-outline"></ion-icon>
+            <input
+              type="text"
+              placeholder="Buscar serviço..."
+              [(ngModel)]="buscaSugestao">
+          </div>
+
+          <!-- Grid de logos -->
+          <div class="sugestoes-logo-grid">
+            <button
+              *ngFor="let s of servicosFiltrados"
+              class="sugestao-logo-chip"
+              type="button"
+              (click)="selecionarSugestao(s)"
+              [title]="s.nome">
+              <img [src]="s.logoUrl" [alt]="s.nome" class="sugestao-logo-img">
+              <span>{{ s.nome }}</span>
+            </button>
+
+            <!-- Opção "Outro" sempre no final -->
+            <button class="sugestao-logo-chip sugestao-outro" type="button" (click)="limparServico(); mostrarSugestoes=false">
+              <span class="outro-icon">✏️</span>
+              <span>Outro...</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- PRÉVIA DO SERVIÇO SELECIONADO -->
+        <div class="servico-preview" *ngIf="novaForm.isPopular && novaForm.nome">
+          <div class="preview-logo-wrap">
+            <img [src]="novaForm.logoUrl" [alt]="novaForm.nome" class="preview-logo-img">
+          </div>
+          <div class="preview-info">
+            <strong>{{ novaForm.nome }}</strong>
+            <span>Serviço selecionado</span>
+          </div>
+          <button class="preview-trocar" type="button" (click)="limparServico()">Trocar</button>
+        </div>
+
+        <!-- CAMPO NOME E EMOJI (só se clicar em Outros) -->
+        <ng-container *ngIf="novaForm.mostrarOutro && !novaForm.isPopular">
+          <div class="field">
+            <label>Nome do Serviço *</label>
+            <input type="text" placeholder="Ex: Minha assinatura..." [(ngModel)]="novaForm.nome" maxlength="40">
+          </div>
+          
+          <div class="emoji-picker-area">
+            <label class="field-label">Ícone do serviço</label>
+            <div class="emoji-picker-row">
+              <div class="emoji-preview">{{ novaForm.emoji }}</div>
+              <div class="emoji-options">
+                <button *ngFor="let e of ['📱','💻','🎮','📺','🎵','🎬','📚','🏋️','🧘','💊','🎓','💼','🌐','🎯','⭐','🔧']"
+                        type="button" class="emoji-opt"
+                        [class.selecionado]="novaForm.emoji === e"
+                        (click)="novaForm.emoji = e">
+                  {{ e }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- VALOR E CICLO E BOTÃO SALVAR (só aparece se já escolheu popular ou se já clicou em outro) -->
+        <ng-container *ngIf="novaForm.isPopular || novaForm.mostrarOutro">
+
+          <!-- VALOR E CICLO -->
+          <div class="form-row">
+            <div class="field" style="flex:1.3">
+              <label>Valor (R$) *</label>
+              <input type="number" placeholder="0,00" [(ngModel)]="novaForm.valor" min="0" step="0.01">
+            </div>
+            <div class="field" style="flex:1">
+              <label>Ciclo</label>
+              <select [(ngModel)]="novaForm.ciclo">
+                <option value="mensal">Mensal</option>
+                <option value="anual">Anual</option>
+                <option value="semanal">Semanal</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- DIA E CATEGORIA -->
+          <div class="form-row">
+            <div class="field" style="flex:1">
+              <label>Dia Renovação</label>
+              <input type="number" min="1" max="31" [(ngModel)]="novaForm.diaRenovacao" placeholder="1">
+            </div>
+            <div class="field" style="flex:1.5">
+              <label>Categoria</label>
+              <select [(ngModel)]="novaForm.categoria">
+                <option *ngFor="let c of categorias" [value]="c.valor">{{ c.label }}</option>
+              </select>
+            </div>
+          </div>
+
+          <p class="form-error" *ngIf="erroForm">{{ erroForm }}</p>
+
+        </ng-container>
+
+      </div>
+
+      <div class="bottom-sheet__footer" *ngIf="novaForm.isPopular || novaForm.mostrarOutro">
+        <button class="btn btn--secondary btn--md btn--full" (click)="fecharModal()">Cancelar</button>
+        <button class="btn btn--primary btn--md btn--full" (click)="salvar()">
+          <ion-icon name="add-outline"></ion-icon>
+          Adicionar
+        </button>
+      </div>
+      <div class="bottom-sheet__footer" *ngIf="!novaForm.isPopular && !novaForm.mostrarOutro">
+        <button class="btn btn--secondary btn--md btn--full" (click)="fecharModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIRMAÇÃO EXCLUSÃO -->
+  <div class="modal-center" *ngIf="mostrarConfirmacao" (click)="cancelarExclusao()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-icon">🗑️</div>
+      <h3>Excluir Assinatura?</h3>
+      <p>Esta ação não pode ser desfeita.</p>
+      <div class="modal-actions">
+        <button class="btn btn--secondary btn--md btn--full" (click)="cancelarExclusao()">Cancelar</button>
+        <button class="btn btn--danger btn--md btn--full" (click)="confirmarExclusao()">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+</ion-content>
