@@ -210,9 +210,9 @@
 
         <div class="campo">
           <label>Número de Meses *</label>
-          <select [(ngModel)]="novaMetaForm.total_periodos">
-            <option *ngFor="let op of opcoesMeses" [ngValue]="op.valor">{{ op.label }}</option>
-          </select>
+          <ion-select interface="popover" cancelText="Cancelar" class="select-moderno" [(ngModel)]="novaMetaForm.total_periodos">
+            <ion-select-option *ngFor="let op of opcoesMeses" [value]="op.valor">{{ op.label }}</ion-select-option>
+          </ion-select>
         </div>
 
         <!-- Campo personalizado -->
@@ -270,5 +270,39 @@
     </div>
   </div>
 
+
+
+  <!-- ================================================= -->
+  <!-- POPUP CELEBRAÇÃO — ESTILO DUOLINGO                 -->
+  <!-- ================================================= -->
+  <div class="popup-conclusao-overlay" *ngIf="mostrarPopupConclusao" (click)="fecharPopupConclusao()">
+    <div class="popup-conclusao" (click)="$event.stopPropagation()">
+
+      <!-- Confetti animado -->
+      <div class="confetti-wrap" aria-hidden="true">
+        <span class="confetti-piece c1">🎉</span>
+        <span class="confetti-piece c2">⭐</span>
+        <span class="confetti-piece c3">🏆</span>
+        <span class="confetti-piece c4">✨</span>
+        <span class="confetti-piece c5">🎊</span>
+        <span class="confetti-piece c6">💫</span>
+      </div>
+
+      <div class="popup-trophy">🏆</div>
+
+      <h2 class="popup-titulo">Parabéns!</h2>
+      <p class="popup-sub">Você completou a meta</p>
+      <p class="popup-meta-nome">{{ metaConcluidaTitulo }}</p>
+
+      <div class="popup-progress-ring">
+        <span>100%</span>
+      </div>
+
+      <button class="popup-btn-fechar" (click)="fecharPopupConclusao()">
+        🎯 Continuar
+      </button>
+
+    </div>
+  </div>
 
 </ion-content>

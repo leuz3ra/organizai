@@ -5,7 +5,9 @@ import { Router } from '@angular/router';
 
 import {
   IonContent,
-  IonIcon
+  IonIcon,
+  IonSelect,
+  IonSelectOption
 } from '@ionic/angular/standalone';
 
 import { addIcons } from 'ionicons';
@@ -51,7 +53,9 @@ function parseNum(val: any): number {
     CommonModule,
     FormsModule,
     IonContent,
-    IonIcon
+    IonIcon,
+    IonSelect,
+    IonSelectOption
   ]
 })
 export class MetasPage implements OnInit {
@@ -67,6 +71,12 @@ export class MetasPage implements OnInit {
   mostrarConfirmacaoExclusao = false;
 
   metaParaExcluir: string | null = null;
+
+  mostrarPopupConclusao = false;
+
+  metaConcluidaTitulo = '';
+
+  private _popupTimer: any = null;
 
   readonly PERSONALIZAR = -1;
 
@@ -218,7 +228,13 @@ export class MetasPage implements OnInit {
   }
 
   getTotalArrecadado(meta: MetaComPagamentos): number {
+    const total = Math.max(1, Math.round(parseNum(meta.total_periodos)));
     const pagos = (meta.pagamentos || []).filter(p => p.pago).length;
+    
+    if (pagos === total) {
+      return parseNum(meta.valor_total);
+    }
+
     const valorPorPeriodo = parseNum(meta.valor_por_periodo);
     return Number((pagos * valorPorPeriodo).toFixed(2));
   }
@@ -234,6 +250,7 @@ export class MetasPage implements OnInit {
 
   async toggleBloco(meta: MetaComPagamentos, periodo: number) {
     const pagoAtual = this.getBlocoPago(meta, periodo);
+    const eraConcluidaAntes = this.isMetaConcluida(meta);
 
     const existente = meta.pagamentos.find(p => p.periodo === periodo);
 
@@ -259,6 +276,14 @@ export class MetasPage implements OnInit {
         meta.pagamentos[idx] = atualizado;
       }
 
+      // Dispara popup Duolingo se acabou de concluir
+      if (!eraConcluidaAntes && this.isMetaConcluida(meta)) {
+        this.metaConcluidaTitulo = meta.titulo;
+        this.mostrarPopupConclusao = true;
+        if (this._popupTimer) clearTimeout(this._popupTimer);
+        this._popupTimer = setTimeout(() => { this.mostrarPopupConclusao = false; }, 5000);
+      }
+
     } catch (err) {
       console.error('Erro ao atualizar bloco:', err);
       if (existente) {
@@ -267,6 +292,11 @@ export class MetasPage implements OnInit {
         meta.pagamentos = meta.pagamentos.filter(p => p.periodo !== periodo);
       }
     }
+  }
+
+  fecharPopupConclusao() {
+    this.mostrarPopupConclusao = false;
+    if (this._popupTimer) clearTimeout(this._popupTimer);
   }
 
 

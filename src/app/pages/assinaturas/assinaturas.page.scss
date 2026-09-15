@@ -89,9 +89,11 @@ ion-content { --background: var(--c-bg); }
   background: var(--c-surface); border: 1px solid var(--c-border);
   border-radius: var(--r-lg);
   display: flex; align-items: center;
-  padding: 13px 14px; gap: 12px;
-  transition: border-color var(--t-base);
+  padding: 14px 14px; gap: 12px;
+  transition: border-color var(--t-base), box-shadow var(--t-base);
   &.pausado { opacity: 0.65; }
+  &.cancelado { opacity: 0.55; background: var(--c-surface-2); }
+  &:hover { border-color: var(--c-border); box-shadow: 0 2px 10px rgba(0,0,0,0.04); }
 }
 
 /* LOGO OFICIAL */
@@ -125,30 +127,59 @@ ion-content { --background: var(--c-bg); }
 }
 .assín-cat { text-transform: capitalize; }
 .assín-ciclo { margin: 2px 0 0; font-size: 11px; color: var(--c-text-muted); text-transform: capitalize; }
+.assín-ciclo-info { margin: 4px 0 0; font-size: 11px; color: var(--c-text-muted); }
 
-.assín-direita { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.assín-status-badge {
+  display: inline-block; font-size: 9px; font-weight: 700;
+  padding: 2px 7px; border-radius: 99px; margin-top: 4px;
+  text-transform: uppercase; letter-spacing: 0.4px;
+  &.s-cancelado { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+  &.s-pausado   { background: var(--c-surface-2); color: var(--c-text-muted); border: 1px solid var(--c-border); }
+}
+
+.assín-direita { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; min-height: 56px; }
 .assín-valor-area { text-align: right; }
-.assín-valor { font-size: 15px; font-weight: 800; letter-spacing: -0.3px; }
-.assín-ciclo-txt { display: block; font-size: 10px; color: var(--c-text-muted); font-weight: 600; }
+.assín-valor { font-size: 15px; font-weight: 800; letter-spacing: -0.3px; line-height: 1; }
+.assín-ciclo-txt { display: block; font-size: 10px; color: var(--c-text-muted); font-weight: 600; margin-top: 2px; }
 
 .assín-btns { display: flex; gap: 6px; }
 
 .btn-toggle {
-  width: 30px; height: 30px; border-radius: var(--r-sm);
+  width: 28px; height: 28px; border-radius: var(--r-sm);
   display: flex; align-items: center; justify-content: center;
   background: #EDE9FE; border: 1px solid #DDD6FE; cursor: pointer;
   transition: all var(--t-fast);
-  ion-icon { font-size: 14px; color: #7C3AED; }
+  ion-icon { font-size: 13px; color: #7C3AED; }
   &.pausado { background: var(--c-accent-light); border-color: var(--c-accent-border); ion-icon { color: var(--c-accent); } }
   &:active { opacity: 0.7; }
 }
 
+.btn-cancelar-assin {
+  width: 28px; height: 28px; border-radius: var(--r-sm);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--c-amber-light); border: 1px solid var(--c-amber-border); cursor: pointer;
+  transition: all var(--t-fast);
+  ion-icon { font-size: 13px; color: var(--c-amber); }
+  &:hover { background: #FDE68A; }
+  &:active { opacity: 0.7; }
+}
+
+.btn-descancelar {
+  width: 28px; height: 28px; border-radius: var(--r-sm);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--c-accent-light); border: 1px solid var(--c-accent-border); cursor: pointer;
+  transition: all var(--t-fast);
+  ion-icon { font-size: 13px; color: var(--c-accent); }
+  &:hover { background: #C0DFD0; }
+  &:active { opacity: 0.7; }
+}
+
 .btn-excluir {
-  width: 30px; height: 30px; border-radius: var(--r-sm);
+  width: 28px; height: 28px; border-radius: var(--r-sm);
   display: flex; align-items: center; justify-content: center;
   background: transparent; border: 1px solid var(--c-border); cursor: pointer;
   transition: all var(--t-fast);
-  ion-icon { font-size: 14px; color: var(--c-text-muted); }
+  ion-icon { font-size: 13px; color: var(--c-text-muted); }
   &:hover { background: var(--c-danger-light); border-color: var(--c-danger-border); ion-icon { color: var(--c-danger); } }
   &:active { opacity: 0.7; }
 }

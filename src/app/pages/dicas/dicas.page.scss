@@ -89,10 +89,10 @@ ion-content {
   font-size: 14px; font-weight: 600; color: var(--c-text-primary); text-align: left; cursor: pointer;
   transition: all 0.2s; font-family: var(--font); display: flex; justify-content: space-between; align-items: center;
   ion-icon { font-size: 20px; }
-  &:hover:not(.disabled) { border-color: #A5B4FC; background: #EEF2FF; }
-  &.selected-correct { border-color: #10B981; background: #ECFDF5; color: #065F46; ion-icon { color: #10B981; } }
-  &.selected-wrong { border-color: #EF4444; background: #FEF2F2; color: #991B1B; ion-icon { color: #EF4444; } }
-  &.show-correct { border-color: #10B981; background: #ECFDF5; color: #065F46; ion-icon { color: #10B981; } }
+  &:hover:not(.disabled) { border-color: var(--c-info-border); background: var(--c-info-light); color: var(--c-info); }
+  &.selected-correct { border-color: var(--c-accent-border); background: var(--c-accent-light); color: var(--c-accent); ion-icon { color: var(--c-accent); } }
+  &.selected-wrong { border-color: var(--c-danger-border); background: var(--c-danger-light); color: var(--c-danger); ion-icon { color: var(--c-danger); } }
+  &.show-correct { border-color: var(--c-accent-border); background: var(--c-accent-light); color: var(--c-accent); ion-icon { color: var(--c-accent); } }
   &.disabled { cursor: not-allowed; opacity: 0.7; }
 }
 .quiz-final {

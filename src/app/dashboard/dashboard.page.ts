@@ -28,7 +28,14 @@ import {
   chevronDownOutline,
   searchOutline,
   pieChartOutline,
-  sparklesOutline
+  sparklesOutline,
+  settingsOutline,
+  moon,
+  sunny,
+  eye,
+  eyeOff,
+  notifications,
+  notificationsOff
 } from 'ionicons/icons';
 
 import { SupabaseService } from '../services/supabase.service';
@@ -58,6 +65,14 @@ export class DashboardPage implements OnInit {
 
   saudacao: string = 'Olá!';
   nomeUsuario: string = '';
+
+  // =====================================================
+  // CONFIGURAÇÕES GERAIS E NOTIFICAÇÕES
+  // =====================================================
+  darkModeAtivo = false;
+  pushNotificacoesAtivo = true;
+  mostrarConfiguracoes = false;
+  mostrarNotificacoes = false;
 
   // =====================================================
   // CONVERSOR DE MOEDAS COM BANDEIRAS REAIS
@@ -163,18 +178,66 @@ export class DashboardPage implements OnInit {
       chevronDownOutline,
       searchOutline,
       pieChartOutline,
-      sparklesOutline
+      sparklesOutline,
+      settingsOutline,
+      moon,
+      sunny,
+      eye,
+      eyeOff,
+      notifications,
+      notificationsOff
     });
   }
 
   async ngOnInit() {
+    this.carregarTemaEscuro();
     await this.carregarUsuario();
   }
 
   async ionViewWillEnter() {
+    this.carregarTemaEscuro();
     await this.carregarUsuario();
   }
 
+  // =====================================================
+  // TEMA ESCURO
+  // =====================================================
+
+  carregarTemaEscuro() {
+    const isDark = localStorage.getItem('temaEscuro') === 'true';
+    this.darkModeAtivo = isDark;
+    document.body.classList.toggle('dark-mode', isDark);
+
+    const isPush = localStorage.getItem('pushNotificacoes') !== 'false';
+    this.pushNotificacoesAtivo = isPush;
+  }
+
+  toggleDarkMode() {
+    this.darkModeAtivo = !this.darkModeAtivo;
+    document.body.classList.toggle('dark-mode', this.darkModeAtivo);
+    localStorage.setItem('temaEscuro', this.darkModeAtivo ? 'true' : 'false');
+  }
+
+  togglePushNotificacoes() {
+    this.pushNotificacoesAtivo = !this.pushNotificacoesAtivo;
+    localStorage.setItem('pushNotificacoes', this.pushNotificacoesAtivo ? 'true' : 'false');
+  }
+
+  abrirConfiguracoes() {
+    this.mostrarConfiguracoes = true;
+  }
+
+  fecharConfiguracoes() {
+    this.mostrarConfiguracoes = false;
+  }
+
+  abrirNotificacoes() {
+    this.mostrarNotificacoes = true;
+  }
+
+  fecharNotificacoes() {
+    this.mostrarNotificacoes = false;
+  }
 
   // =====================================================
   // CARREGAR USUÁRIO CADASTRADO E MONTAR SAUDAÇÃO

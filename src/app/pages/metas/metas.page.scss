@@ -200,7 +200,7 @@ ion-content {
 
   &.meta-concluida {
     border-color: var(--c-accent-border);
-    background: #FDFFFE;
+    background: var(--c-accent-light);
   }
 }
 
@@ -658,4 +658,171 @@ ion-content {
   transition: opacity var(--t-fast), transform var(--t-fast);
 
   &:active { opacity: 0.85; transform: scale(0.98); }
+}
+
+/* ============================================================
+   POPUP CELEBRAÇÃO — ESTILO DUOLINGO
+   ============================================================ */
+@keyframes popup-enter {
+  0%   { opacity: 0; transform: scale(0.7) translateY(40px); }
+  70%  { transform: scale(1.06) translateY(-6px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes trophy-bounce {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  25%       { transform: scale(1.2) rotate(-8deg); }
+  75%       { transform: scale(1.15) rotate(8deg); }
+}
+
+@keyframes confetti-fly {
+  0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translateY(-120px) rotate(360deg) scale(0.5); opacity: 0; }
+}
+
+@keyframes ring-fill {
+  0%   { stroke-dashoffset: 220; }
+  100% { stroke-dashoffset: 0; }
+}
+
+.popup-conclusao-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 900;
+  padding: 20px;
+}
+
+.popup-conclusao {
+  background: var(--c-surface);
+  border-radius: var(--r-2xl);
+  width: 100%;
+  max-width: 320px;
+  padding: 32px 24px 28px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  animation: popup-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.08);
+
+  /* Borda gradiente colorida no topo */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #58CC02, #FFD900, #FF4B4B, #CE82FF, #1CB0F6);
+  }
+}
+
+/* Confetti flutuando */
+.confetti-wrap {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 100%;
+  pointer-events: none;
+}
+
+.confetti-piece {
+  position: absolute;
+  font-size: 20px;
+  animation: confetti-fly 1.8s ease-out both;
+
+  &.c1 { left: 10%;  top: 20%; animation-delay: 0s;    font-size: 22px; }
+  &.c2 { left: 25%;  top: 10%; animation-delay: 0.15s; font-size: 18px; }
+  &.c3 { left: 50%;  top: 5%;  animation-delay: 0.05s; font-size: 24px; }
+  &.c4 { left: 70%;  top: 15%; animation-delay: 0.2s;  font-size: 16px; }
+  &.c5 { left: 85%;  top: 25%; animation-delay: 0.1s;  font-size: 20px; }
+  &.c6 { left: 40%;  top: 30%; animation-delay: 0.25s; font-size: 18px; }
+}
+
+.popup-trophy {
+  font-size: 64px;
+  margin-bottom: 8px;
+  display: block;
+  animation: trophy-bounce 0.8s ease-in-out 0.5s both;
+  filter: drop-shadow(0 4px 16px rgba(255,215,0,0.5));
+}
+
+.popup-titulo {
+  margin: 0 0 4px;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.8px;
+  background: linear-gradient(135deg, #58CC02 0%, #1CB0F6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.popup-sub {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: var(--c-text-muted);
+  font-weight: 500;
+}
+
+.popup-meta-nome {
+  margin: 0 0 20px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--c-text-primary);
+  letter-spacing: -0.3px;
+  padding: 0 8px;
+}
+
+.popup-progress-ring {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: conic-gradient(#58CC02 100%, var(--c-border) 0%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    background: var(--c-surface);
+    border-radius: 50%;
+  }
+
+  span {
+    position: relative;
+    z-index: 1;
+    font-size: 14px;
+    font-weight: 900;
+    color: #58CC02;
+  }
+}
+
+.popup-btn-fechar {
+  width: 100%;
+  height: 50px;
+  background: #58CC02;
+  border: none;
+  border-bottom: 4px solid #46A302;
+  border-radius: var(--r-md);
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--font);
+  letter-spacing: -0.2px;
+  text-transform: uppercase;
+  transition: transform 0.1s, border-bottom 0.1s, margin-top 0.1s;
+
+  &:active { 
+    transform: translateY(4px);
+    border-bottom: 0px solid #46A302;
+    margin-bottom: 4px; /* compensate for the border loss */
+  }
 }

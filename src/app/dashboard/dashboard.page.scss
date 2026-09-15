@@ -36,7 +36,13 @@ ion-content {
     }
   }
 
-  .topo-logout {
+  .topo-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .topo-btn {
     font-size: 22px;
     color: var(--c-text-muted);
     cursor: pointer;
@@ -44,8 +50,13 @@ ion-content {
     border-radius: 8px;
     transition: background var(--t-fast), color var(--t-fast);
 
-    &:hover  { background: var(--c-danger-light); color: var(--c-danger); }
-    &:active { background: var(--c-danger-light); color: var(--c-danger); }
+    &:hover  { background: var(--c-surface-2); color: var(--c-text-primary); }
+    &:active { background: var(--c-border); color: var(--c-text-primary); }
+
+    &--logout {
+      &:hover  { background: var(--c-danger-light); color: var(--c-danger); }
+      &:active { background: var(--c-danger-light); color: var(--c-danger); }
+    }
   }
 }
 
@@ -674,6 +685,87 @@ ion-content {
     flex-shrink: 0;
 
     ion-icon { font-size: 15px; }
+  }
+}
+
+/* ============================================================
+   CONFIG ITEM & TOGGLE
+   ============================================================ */
+.config-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: all var(--t-fast);
+
+  &:hover {
+    background: var(--c-bg);
+    border-color: var(--c-accent-border);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  .config-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    ion-icon { font-size: 18px; }
+  }
+
+  .config-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+
+    strong {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--c-text-primary);
+    }
+
+    span {
+      font-size: 12px;
+      color: var(--c-text-muted);
+    }
+  }
+}
+
+.toggle-wrap {
+  width: 44px;
+  height: 24px;
+  background: var(--c-border);
+  border-radius: 99px;
+  position: relative;
+  transition: background var(--t-fast);
+
+  .toggle-knob {
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--t-fast);
+  }
+
+  &.ativo {
+    background: var(--c-accent);
+    .toggle-knob {
+      transform: translateX(20px);
+    }
   }
 }
 

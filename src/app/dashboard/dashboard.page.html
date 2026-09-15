@@ -8,7 +8,11 @@
       <img src="assets/icon.png" alt="OrganizAí">
       <span>OrganizAí</span>
     </div>
-    <ion-icon name="log-out-outline" class="topo-logout" (click)="logout()" title="Sair"></ion-icon>
+    <div class="topo-actions">
+      <ion-icon name="notifications-outline" class="topo-btn" (click)="abrirNotificacoes()" title="Notificações"></ion-icon>
+      <ion-icon name="settings-outline" class="topo-btn" (click)="abrirConfiguracoes()" title="Configurações"></ion-icon>
+      <ion-icon name="log-out-outline" class="topo-btn topo-btn--logout" (click)="logout()" title="Sair"></ion-icon>
+    </div>
   </div>
 
 
@@ -278,6 +282,77 @@
       <div class="logout-modal__actions">
         <button class="logout-btn logout-btn--cancel" (click)="cancelarLogout()">Cancelar</button>
         <button class="logout-btn logout-btn--confirm" (click)="confirmarLogout()">Sair</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================= -->
+  <!-- MODAL NOTIFICAÇÕES                            -->
+  <!-- ============================================= -->
+  <div class="overlay" *ngIf="mostrarNotificacoes" (click)="fecharNotificacoes()">
+    <div class="moeda-sheet" (click)="$event.stopPropagation()">
+      <div class="moeda-sheet__handle"></div>
+      <div class="moeda-sheet__header">
+        <div>
+          <h3>Notificações</h3>
+          <p>Fique por dentro das novidades</p>
+        </div>
+        <button class="btn-fechar-sheet" type="button" (click)="fecharNotificacoes()">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </div>
+      <div class="empty-state" style="padding: 40px 20px;">
+        <div class="empty-icon">🔔</div>
+        <h3>Tudo tranquilo por aqui!</h3>
+        <p>Você não possui novas notificações no momento.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================= -->
+  <!-- MODAL CONFIGURAÇÕES                           -->
+  <!-- ============================================= -->
+  <div class="overlay" *ngIf="mostrarConfiguracoes" (click)="fecharConfiguracoes()">
+    <div class="moeda-sheet" (click)="$event.stopPropagation()">
+      <div class="moeda-sheet__handle"></div>
+      <div class="moeda-sheet__header">
+        <div>
+          <h3>Configurações</h3>
+          <p>Ajuste o app do seu jeito</p>
+        </div>
+        <button class="btn-fechar-sheet" type="button" (click)="fecharConfiguracoes()">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </div>
+      <div class="config-lista" style="padding: 16px; display: flex; flex-direction: column; gap: 8px;">
+        <!-- MODO ESCURO -->
+        <div class="config-item" (click)="toggleDarkMode()">
+          <div class="config-icon" [style.background]="darkModeAtivo ? '#1A4A2E' : '#E8F5EE'">
+            <ion-icon [name]="darkModeAtivo ? 'moon' : 'sunny'" [style.color]="darkModeAtivo ? '#40A06A' : '#1E5C3A'"></ion-icon>
+          </div>
+          <div class="config-info">
+            <strong>Modo Escuro</strong>
+            <span>{{ darkModeAtivo ? 'Ativado' : 'Desativado' }}</span>
+          </div>
+          <div class="toggle-wrap" [class.ativo]="darkModeAtivo">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+
+        <!-- NOTIFICAÇÕES PUSH -->
+        <div class="config-item" (click)="togglePushNotificacoes()">
+          <div class="config-icon" [style.background]="pushNotificacoesAtivo ? '#EFE8FE' : '#F1F5F9'">
+            <ion-icon [name]="pushNotificacoesAtivo ? 'notifications' : 'notifications-off'" [style.color]="pushNotificacoesAtivo ? '#7C3AED' : '#94A3B8'"></ion-icon>
+          </div>
+          <div class="config-info">
+            <strong>Notificações Push</strong>
+            <span>{{ pushNotificacoesAtivo ? 'Ativadas' : 'Desativadas' }}</span>
+          </div>
+          <div class="toggle-wrap" [class.ativo]="pushNotificacoesAtivo">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>

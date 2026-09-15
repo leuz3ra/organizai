@@ -10,8 +10,8 @@
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
-/* Dark mode desativado — design sempre claro */
-/* @import '@ionic/angular/css/palettes/dark.system.css'; */
+/* Dark mode opcional — ativado dinamicamente */
+@import '@ionic/angular/css/palettes/dark.class.css';
 
 /* ============================================================
    GOOGLE FONTS — Inter
@@ -78,6 +78,42 @@
   --t-fast:   0.12s ease;
   --t-base:   0.18s ease;
   --t-slow:   0.28s ease;
+}
+
+/* ============================================================
+   DARK MODE — sobrescreve tokens quando body.dark-mode
+   ============================================================ */
+body.dark-mode {
+  /* Tons mais suaves, estilo "slate" moderno */
+  --c-bg:            #1E2028;
+  --c-surface:       #272A35;
+  --c-surface-2:     #323644;
+  --c-border:        #434858;
+  --c-border-light:  #393D4D;
+
+  --c-text-primary:   #F8FAFC;
+  --c-text-secondary: #94A3B8;
+  --c-text-muted:     #64748B;
+
+  /* Cores de acento levemente ajustadas para ter bom contraste no fundo mais cinza */
+  --c-accent-light:  #163A27;
+  --c-accent-border: #235A3E;
+
+  --c-danger-light:  #3A1616;
+  --c-danger-border: #6B2626;
+
+  --c-info-light:    #16253A;
+  --c-info-border:   #233B5A;
+
+  --c-amber-light:   #3A2C16;
+  --c-amber-border:  #6B5226;
+
+  /* --- Integração com os componentes nativos do Ionic (como ion-popover e ion-select) --- */
+  --ion-background-color: var(--c-surface);
+  --ion-text-color: var(--c-text-primary);
+  --ion-item-background: var(--c-surface);
+  --ion-item-color: var(--c-text-primary);
+  --ion-overlay-background-color: var(--c-surface);
 }
 
 /* ============================================================
@@ -288,29 +324,28 @@ input[type="number"] {
     font-size: 11px;
     font-weight: 700;
     color: var(--c-text-muted);
-    margin-bottom: 5px;
+    margin-bottom: 6px;
     text-transform: uppercase;
     letter-spacing: 0.7px;
   }
 
   input,
-  select,
   textarea {
     width: 100%;
     background: var(--c-bg);
-    border: 1px solid var(--c-border);
+    border: 1.5px solid var(--c-border);
     border-radius: var(--r-md);
     padding: 11px 13px;
-    font-size: 15px;
+    font-size: 14px;
+    font-weight: 600;
     color: var(--c-text-primary);
     outline: none;
     font-family: var(--font);
     transition: border-color var(--t-base), box-shadow var(--t-base), background var(--t-base);
     box-sizing: border-box;
-    appearance: auto;
     resize: none;
 
-    &::placeholder { color: var(--c-text-muted); }
+    &::placeholder { color: var(--c-text-muted); font-weight: 400; }
 
     &:focus {
       border-color: var(--c-accent-mid);
@@ -318,7 +353,83 @@ input[type="number"] {
       box-shadow: 0 0 0 3px rgba(64,160,106,.12);
     }
   }
+
+  /* Select com seta customizada e mesmo visual do moeda-btn-moderno */
+  select {
+    width: 100%;
+    height: 52px;
+    background: var(--c-bg);
+    border: 1.5px solid var(--c-border);
+    border-radius: var(--r-md);
+    padding: 0 36px 0 12px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--c-text-primary);
+    outline: none;
+    font-family: var(--font);
+    transition: all var(--t-fast);
+    box-sizing: border-box;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239BA5B8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--c-accent-mid);
+      background: var(--c-surface);
+    }
+
+    &:focus {
+      border-color: var(--c-accent-mid);
+      background-color: var(--c-surface);
+      box-shadow: 0 0 0 3px rgba(64,160,106,.12);
+    }
+
+    &:active {
+      transform: scale(0.98);
+      border-color: var(--c-accent);
+    }
+  }
 }
+
+/* Classe utilitária para selects globais modernos */
+.select-moderno {
+  width: 100%;
+  height: 52px;
+  background: var(--c-bg);
+  border: 1.5px solid var(--c-border);
+  border-radius: var(--r-md);
+  padding: 0 36px 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--c-text-primary);
+  outline: none;
+  font-family: var(--font);
+  transition: all var(--t-fast);
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239BA5B8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--c-accent-mid);
+    background: var(--c-surface);
+  }
+  &:focus {
+    border-color: var(--c-accent-mid);
+    background-color: var(--c-surface);
+    box-shadow: 0 0 0 3px rgba(64,160,106,.12);
+  }
+  &:active {
+    transform: scale(0.98);
+    border-color: var(--c-accent);
+  }
+}
+
 
 /* Botões partilhados */
 .btn {

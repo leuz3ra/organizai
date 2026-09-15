@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
 
 @Component({
@@ -8,4 +8,9 @@ import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
 })
 export class AppComponent {
   constructor() {}
+
+  ngOnInit() {
+    const isDark = localStorage.getItem('temaEscuro') === 'true';
+    document.body.classList.toggle('dark-mode', isDark);
+  }
 }

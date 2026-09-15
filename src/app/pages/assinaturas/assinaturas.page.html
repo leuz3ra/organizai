@@ -9,7 +9,7 @@
         <span>Assinaturas</span>
       </div>
     </div>
-    <button class="btn-add" (click)="abrirModal()">
+    <button class="btn-add" *ngIf="filtroStatus !== 'cancelado'" (click)="abrirModal()">
       <ion-icon name="add-outline"></ion-icon>
       Nova
     </button>
@@ -26,6 +26,7 @@
       <div class="hero-stats">
         <div class="stat"><strong>{{ contAtivas }}</strong><span>Ativas</span></div>
         <div class="stat"><strong>{{ contPausadas }}</strong><span>Pausadas</span></div>
+        <div class="stat"><strong>{{ contCanceladas }}</strong><span>Canceladas</span></div>
       </div>
     </div>
   </div>
@@ -42,10 +43,10 @@
 
   <!-- EMPTY -->
   <div class="empty-state" *ngIf="filtradas.length === 0">
-    <div class="empty-icon">📺</div>
-    <h3>Nenhuma assinatura</h3>
-    <p>Adicione seus serviços recorrentes para acompanhar quanto gasta por mês.</p>
-    <button class="btn btn--primary btn--md" (click)="abrirModal()">
+    <div class="empty-icon">{{ filtroStatus === 'cancelado' ? '🚫' : filtroStatus === 'pausado' ? '⏸️' : '📺' }}</div>
+    <h3>{{ filtroStatus === 'cancelado' ? 'Nenhuma cancelada' : filtroStatus === 'pausado' ? 'Nenhuma pausada' : 'Nenhuma assinatura' }}</h3>
+    <p>{{ filtroStatus === 'cancelado' ? 'Assinaturas canceladas aparecerão aqui.' : filtroStatus === 'pausado' ? 'Assinaturas pausadas aparecerão aqui.' : 'Adicione seus serviços recorrentes para acompanhar quanto gasta por mês.' }}</p>
+    <button class="btn btn--primary btn--md" *ngIf="filtroStatus !== 'cancelado'" (click)="abrirModal()">
       <ion-icon name="add-outline"></ion-icon>
       Adicionar Serviço
     </button>
@@ -87,15 +88,31 @@
 
       <!-- VALOR + AÇÕES -->
       <div class="assín-direita">
-        <strong class="assín-valor" [style.color]="a.status==='pausado' ? 'var(--c-text-muted)' : a.cor">
+        <strong class="assín-valor" [style.color]="a.status==='pausado' || a.status==='cancelado' ? 'var(--c-text-muted)' : a.cor">
           {{ fmt(a.valor) }}
         </strong>
         <span class="assín-ciclo-txt">{{ getLabelCiclo(a.ciclo) }}</span>
-        <div class="assín-btns">
-          <button class="btn-toggle" [class.pausado]="a.status==='pausado'" (click)="toggleStatus(a)">
+        <div class="assín-btns" style="margin-top: auto; display: flex; gap: 6px;">
+          <button class="btn-toggle"
+            *ngIf="a.status !== 'cancelado'"
+            [class.pausado]="a.status==='pausado'"
+            (click)="toggleStatus(a)"
+            [title]="a.status==='ativo' ? 'Pausar' : 'Reativar'">
             <ion-icon [name]="a.status==='ativo' ? 'pause-outline' : 'play-outline'"></ion-icon>
           </button>
-          <button class="btn-excluir" (click)="iniciarExcluir(a.id, $event)">
+          <button class="btn-cancelar-assin"
+            *ngIf="a.status !== 'cancelado'"
+            (click)="cancelarAssinatura(a, $event)"
+            title="Cancelar assinatura">
+            <ion-icon name="ban-outline"></ion-icon>
+          </button>
+          <button class="btn-descancelar"
+            *ngIf="a.status === 'cancelado'"
+            (click)="descancelarAssinatura(a, $event)"
+            title="Reativar assinatura">
+            <ion-icon name="refresh-outline"></ion-icon>
+          </button>
+          <button class="btn-excluir" (click)="iniciarExcluir(a.id, $event)" title="Excluir">
             <ion-icon name="trash-outline"></ion-icon>
           </button>
         </div>
@@ -204,11 +221,11 @@
             </div>
             <div class="field" style="flex:1">
               <label>Ciclo</label>
-              <select [(ngModel)]="novaForm.ciclo">
-                <option value="mensal">Mensal</option>
-                <option value="anual">Anual</option>
-                <option value="semanal">Semanal</option>
-              </select>
+              <ion-select interface="popover" cancelText="Cancelar" class="select-moderno" [(ngModel)]="novaForm.ciclo">
+                <ion-select-option value="mensal">Mensal</ion-select-option>
+                <ion-select-option value="anual">Anual</ion-select-option>
+                <ion-select-option value="semanal">Semanal</ion-select-option>
+              </ion-select>
             </div>
           </div>
 
@@ -216,13 +233,15 @@
           <div class="form-row">
             <div class="field" style="flex:1">
               <label>Dia Renovação</label>
-              <input type="number" min="1" max="31" [(ngModel)]="novaForm.diaRenovacao" placeholder="1">
+              <ion-select interface="popover" cancelText="Cancelar" class="select-moderno" [(ngModel)]="novaForm.diaRenovacao">
+                <ion-select-option *ngFor="let dia of diasMes" [value]="dia">{{ dia }}</ion-select-option>
+              </ion-select>
             </div>
             <div class="field" style="flex:1.5">
               <label>Categoria</label>
-              <select [(ngModel)]="novaForm.categoria">
-                <option *ngFor="let c of categorias" [value]="c.valor">{{ c.label }}</option>
-              </select>
+              <ion-select interface="popover" cancelText="Cancelar" class="select-moderno" [(ngModel)]="novaForm.categoria">
+                <ion-select-option *ngFor="let c of categorias" [value]="c.valor">{{ c.label }}</ion-select-option>
+              </ion-select>
             </div>
           </div>
 

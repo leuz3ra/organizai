@@ -103,37 +103,38 @@ ion-content { --background: var(--c-bg); }
   border-radius: var(--r-xl);
   padding: 18px;
   cursor: pointer;
+  user-select: none;
   transition: transform var(--t-fast), box-shadow var(--t-fast);
   &:active { transform: scale(0.98); }
 
   &--purple {
-    background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);
-    border: 1px solid #DDD6FE;
-    .cat-card__icon-wrap { background: #7C3AED; }
-    .cat-card__arrow { color: #7C3AED; }
-    h3 { color: #4C1D95; }
-    p  { color: #6D28D9; }
-    .cat-card__valor { border-top-color: #DDD6FE; span { color: #7C3AED; } strong { color: #4C1D95; } }
+    background: var(--c-accent-light);
+    border: 1px solid var(--c-accent-border);
+    .cat-card__icon-wrap { background: var(--c-accent); }
+    .cat-card__arrow { color: var(--c-accent); }
+    h3 { color: var(--c-text-primary); }
+    p  { color: var(--c-text-secondary); }
+    .cat-card__valor { border-top-color: var(--c-accent-border); span { color: var(--c-accent); } strong { color: var(--c-text-primary); } }
   }
 
   &--danger {
-    background: linear-gradient(135deg, var(--c-danger-light) 0%, #FEE2E2 100%);
+    background: var(--c-danger-light);
     border: 1px solid var(--c-danger-border);
     .cat-card__icon-wrap { background: var(--c-danger); }
     .cat-card__arrow { color: var(--c-danger); }
-    h3 { color: #7F1D1D; }
-    p  { color: #991B1B; }
-    .cat-card__valor { border-top-color: var(--c-danger-border); span { color: var(--c-danger); } strong { color: #7F1D1D; } }
+    h3 { color: var(--c-text-primary); }
+    p  { color: var(--c-text-secondary); }
+    .cat-card__valor { border-top-color: var(--c-danger-border); span { color: var(--c-danger); } strong { color: var(--c-text-primary); } }
   }
 
   &--amber {
-    background: linear-gradient(135deg, var(--c-amber-light) 0%, #FEF3C7 100%);
+    background: var(--c-amber-light);
     border: 1px solid var(--c-amber-border);
-    .cat-card__icon-wrap { background: #D97706; }
-    .cat-card__arrow { color: #D97706; }
-    h3 { color: #451A03; }
-    p  { color: #92400E; }
-    .cat-card__valor { border-top-color: var(--c-amber-border); span { color: #D97706; } strong { color: #451A03; } }
+    .cat-card__icon-wrap { background: var(--c-amber); }
+    .cat-card__arrow { color: var(--c-amber); }
+    h3 { color: var(--c-text-primary); }
+    p  { color: var(--c-text-secondary); }
+    .cat-card__valor { border-top-color: var(--c-amber-border); span { color: var(--c-amber); } strong { color: var(--c-text-primary); } }
   }
 }
 
