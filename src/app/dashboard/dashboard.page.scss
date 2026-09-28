@@ -11,6 +11,7 @@ ion-content {
   align-items: center;
   background: var(--c-surface);
   padding: 13px 20px;
+  padding-top: calc(13px + var(--ion-safe-area-top, env(safe-area-inset-top, 0px)));
   border-bottom: 1px solid var(--c-border);
   position: sticky;
   top: 0;
@@ -855,3 +856,306 @@ ion-content {
     box-shadow: var(--shadow-danger);
   }
 }
+
+/* ============================================================
+   CARD RESUMO FINANCEIRO INTELIGENTE (SNAPSHOT)
+   ============================================================ */
+.resumo-card-container {
+  padding: 16px 16px 8px;
+}
+
+.resumo-card {
+  background: linear-gradient(135deg, var(--c-surface) 0%, var(--c-surface-2) 100%);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-2xl);
+  padding: 20px 18px 16px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--c-accent), var(--c-accent-mid));
+  }
+
+  &__topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  &__titulo-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    span {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--c-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+  }
+
+  &__logo {
+    width: 22px;
+    height: 18px;
+    object-fit: contain;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.12));
+  }
+
+  &__icon {
+    font-size: 16px;
+    color: var(--c-accent);
+  }
+
+  &__eye-btn {
+    background: transparent;
+    border: none;
+    color: var(--c-text-muted);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    transition: color var(--t-fast);
+
+    &:hover { color: var(--c-text-primary); }
+  }
+
+  &__valor-principal {
+    margin-bottom: 16px;
+
+    h1 {
+      margin: 0 0 2px;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--c-accent);
+      letter-spacing: -0.6px;
+
+      &.negativo {
+        color: var(--c-danger);
+      }
+    }
+  }
+
+  &__subtag {
+    font-size: 11px;
+    color: var(--c-text-muted);
+  }
+
+  .btn-definir-renda {
+    background: var(--c-accent-light);
+    color: var(--c-accent);
+    border: 1px solid var(--c-accent-border);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    margin-top: 4px;
+    transition: background var(--t-fast);
+
+    &:hover { background: var(--c-accent); color: white; }
+  }
+}
+
+/* MÉTRICAS RÁPIDAS */
+.resumo-metricas {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  padding: 10px 8px;
+  margin-bottom: 12px;
+}
+
+.resumo-metrica {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--r-sm);
+  transition: background var(--t-fast);
+
+  &:hover {
+    background: var(--c-surface-2);
+  }
+
+  .metrica-label {
+    font-size: 11px;
+    color: var(--c-text-muted);
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .metrica-valor {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--c-text-primary);
+
+    &--alerta {
+      color: #D97706;
+    }
+
+    &--accent {
+      color: var(--c-accent);
+    }
+  }
+}
+
+/* RADAR DE VENCIMENTOS */
+.radar-alerta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  margin-bottom: 14px;
+  cursor: pointer;
+  transition: transform var(--t-fast);
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  ion-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  &__texto {
+    font-size: 12px;
+    font-weight: 600;
+    flex: 1;
+    line-height: 1.35;
+  }
+
+  &__seta {
+    font-size: 14px;
+    opacity: 0.7;
+    flex-shrink: 0;
+  }
+
+  &--perigo {
+    background: var(--c-danger-light);
+    border: 1px solid var(--c-danger-border);
+    color: var(--c-danger);
+  }
+
+  &--alerta {
+    background: var(--c-amber-light);
+    border: 1px solid var(--c-amber-border);
+    color: var(--c-amber);
+  }
+
+  &--sucesso {
+    background: var(--c-accent-light);
+    border: 1px solid var(--c-accent-border);
+    color: var(--c-accent);
+  }
+
+  &--ok {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    color: var(--c-text-secondary);
+  }
+}
+
+/* ATALHOS RÁPIDOS */
+.atalhos-rapidos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.atalho-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  padding: 9px 4px;
+  cursor: pointer;
+  transition: all var(--t-fast);
+
+  ion-icon {
+    font-size: 17px;
+    color: var(--c-accent);
+  }
+
+  span {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--c-text-primary);
+  }
+
+  &:hover {
+    border-color: var(--c-accent-border);
+    background: var(--c-accent-light);
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+/* ABAS DE FERRAMENTAS PRÁTICAS */
+.ferramentas-tabs-container {
+  padding: 0 16px 8px;
+}
+
+.ferramentas-tabs {
+  display: flex;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-xl);
+  padding: 3px;
+  gap: 4px;
+}
+
+.ferramenta-tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 12px;
+  border-radius: var(--r-lg);
+  border: none;
+  background: transparent;
+  color: var(--c-text-secondary);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--t-fast);
+
+  ion-icon {
+    font-size: 15px;
+  }
+
+  &.ativo {
+    background: var(--c-surface);
+    color: var(--c-text-primary);
+    box-shadow: var(--shadow-xs);
+  }
+
+  &:hover:not(.ativo) {
+    color: var(--c-text-primary);
+  }
+}

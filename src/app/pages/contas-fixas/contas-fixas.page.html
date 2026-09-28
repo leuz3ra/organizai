@@ -3,7 +3,6 @@
     <div class="topo-left">
       <ion-icon name="arrow-back-outline" class="btn-voltar" (click)="voltar()"></ion-icon>
       <div class="topo-logo">
-        <img src="assets/icon.png" alt="OrganizAí">
         <span>Contas Fixas</span>
       </div>
     </div>
@@ -65,34 +64,33 @@
   <!-- LISTA -->
   <div class="lista" *ngIf="contas.length > 0">
     <div class="cf-card" *ngFor="let c of contas"
-         [class.pago]="c.status==='pago'"
-         [style.--cat-cor]="getCatInfo(c.categoria).cor"
-         (click)="togglePago(c)">
+         [class.pago]="c.status==='pago'">
 
-      <div class="cf-icone-wrap">
-        <ion-icon [name]="getCatInfo(c.categoria).icon"></ion-icon>
+      <div class="cf-main">
+        <div class="cf-info">
+          <div class="cf-top-row">
+            <h4>{{ c.descricao }}</h4>
+            <span class="cf-dia-tag">Vence dia {{ c.diaVencimento }}</span>
+          </div>
+          <div class="cf-bottom-row">
+            <span class="cf-cat-label">{{ getCatInfo(c.categoria).label }}</span>
+            <span *ngIf="c.status === 'pago'" class="txt-pago">Pago este mês ✓</span>
+          </div>
+        </div>
+
+        <div class="cf-direita">
+          <strong class="cf-valor" [class.valor-pago]="c.status==='pago'">{{ fmt(c.valor) }}</strong>
+          <button class="btn-del" (click)="iniciarExcluir(c.id, $event)" title="Excluir">
+            <ion-icon name="trash-outline"></ion-icon>
+          </button>
+        </div>
       </div>
 
-      <div class="cf-info">
-        <h4>{{ c.descricao }}</h4>
-        <div class="cf-meta">
-          <ion-icon name="calendar-outline"></ion-icon>
-          <span>Todo dia {{ c.diaVencimento }}</span>
-          <span class="sep">·</span>
-          <span *ngIf="c.status === 'pendente'" class="dias-rest">{{ getProximoVenc(c) }} ({{ getDiasParaVencer(c) }}d)</span>
-          <span *ngIf="c.status === 'pago'" class="txt-pago">Pago este mês ✓</span>
-        </div>
-        <span class="cf-cat-label">{{ getCatInfo(c.categoria).label }}</span>
-      </div>
-
-      <div class="cf-direita">
-        <strong class="cf-valor" [class.valor-pago]="c.status==='pago'">{{ fmt(c.valor) }}</strong>
-        <div class="cf-check">
-          <ion-icon [name]="c.status==='pago' ? 'checkmark-circle-outline' : 'ellipse-outline'"
-                    [class.icon-pago]="c.status==='pago'"></ion-icon>
-        </div>
-        <button class="btn-del" (click)="iniciarExcluir(c.id, $event)">
-          <ion-icon name="trash-outline"></ion-icon>
+      <!-- FORMA DE DIMINUIÇÃO NA MESMA CAIXA -->
+      <div class="cf-acoes">
+        <button class="btn-cf-diminuir" [class.pago]="c.status==='pago'" (click)="togglePago(c)">
+          <ion-icon [name]="c.status==='pago' ? 'checkmark-circle-outline' : 'remove-circle-outline'"></ion-icon>
+          <span>{{ c.status==='pago' ? 'Conta paga (clique para reverter)' : 'Dar baixa neste mês (diminuir)' }}</span>
         </button>
       </div>
 

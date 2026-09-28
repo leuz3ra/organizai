@@ -58,19 +58,19 @@ ion-content {
     gap: 12px;
   }
 
-  /* LOGO MINIMALISTA */
-  .banner-badge {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 4px;
+  /* LOGO DA MARCA */
+  .banner-brand-logo {
+    height: 48px;
+    width: auto;
+    max-width: 160px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.25));
+    margin-bottom: 8px;
+    display: block;
+    transition: transform var(--t-fast);
 
-    .banner-badge-icon {
-      width: 56px;
-      height: 56px;
-      border-radius: 16px;
-      object-fit: cover;
-      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35), 0 0 0 3px rgba(255,255,255,0.22);
+    &:hover {
+      transform: scale(1.06);
     }
   }
 

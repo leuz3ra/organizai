@@ -10,6 +10,7 @@ import {
   trophyOutline, checkmarkCircle, closeCircle,
   trendingUpOutline, shieldCheckmarkOutline, pieChartOutline, cutOutline, barChartOutline, homeOutline
 } from 'ionicons/icons';
+import { UserStorageService } from '../../services/user-storage.service';
 
 export interface Dica {
   id: string;
@@ -65,7 +66,10 @@ export class DicasPage implements OnInit {
   respostaSelecionada: number | null = null;
   quizCorreto: boolean | null = null;
 
-  constructor(private router: Router) {
+  constructor(
+    private router: Router,
+    private userStorage: UserStorageService
+  ) {
     addIcons({
       arrowBackOutline, searchOutline, closeOutline,
       bookmark, bookmarkOutline, bulbOutline, chevronForwardOutline,
@@ -74,13 +78,19 @@ export class DicasPage implements OnInit {
     });
   }
 
-  ngOnInit() {
+  async ngOnInit() {
+    await this.userStorage.carregarUsuarioAtual();
+    this.carregarSalvas();
+  }
+
+  async ionViewWillEnter() {
+    await this.userStorage.carregarUsuarioAtual();
     this.carregarSalvas();
   }
 
   carregarSalvas() {
     try {
-      const salvasLS = JSON.parse(localStorage.getItem('organizai_dicas_salvas') || '[]');
+      const salvasLS = JSON.parse(this.userStorage.getItem('dicas_salvas') || '[]');
       this.dicas.forEach(d => {
         d.salva = salvasLS.includes(d.id);
       });
@@ -89,7 +99,7 @@ export class DicasPage implements OnInit {
 
   salvarLS() {
     const salvasLS = this.dicas.filter(d => d.salva).map(d => d.id);
-    localStorage.setItem('organizai_dicas_salvas', JSON.stringify(salvasLS));
+    this.userStorage.setItem('dicas_salvas', JSON.stringify(salvasLS));
   }
 
   get dicasFiltradas(): Dica[] {

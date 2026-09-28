@@ -4,7 +4,23 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonContent, IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { arrowBackOutline, walletOutline, trendingUpOutline, pieChartOutline, bulbOutline, shieldCheckmarkOutline, calendarOutline, alertCircleOutline } from 'ionicons/icons';
+import {
+  arrowBackOutline,
+  walletOutline,
+  trendingUpOutline,
+  pieChartOutline,
+  bulbOutline,
+  shieldCheckmarkOutline,
+  calendarOutline,
+  alertCircleOutline,
+  addCircleOutline,
+  flagOutline,
+  createOutline,
+  checkmarkOutline,
+  closeOutline
+} from 'ionicons/icons';
+import { UserStorageService } from '../../services/user-storage.service';
+import { MetasService } from '../../services/metas.service';
 
 interface Vencimento {
   nome: string;
@@ -28,27 +44,49 @@ export class VisaoGeralPage implements OnInit {
   totalAssinaturas: number = 0;
   totalContasFixas: number = 0;
   totalBoletosPendentes: number = 0;
+  totalPoupadoMetas: number = 0;
 
   proximosVencimentos: Vencimento[] = [];
 
-  constructor(private router: Router) {
-    addIcons({ arrowBackOutline, walletOutline, trendingUpOutline, pieChartOutline, bulbOutline, shieldCheckmarkOutline, calendarOutline, alertCircleOutline });
+  constructor(
+    private router: Router,
+    private userStorage: UserStorageService,
+    private metasService: MetasService
+  ) {
+    addIcons({
+      arrowBackOutline,
+      walletOutline,
+      trendingUpOutline,
+      pieChartOutline,
+      bulbOutline,
+      shieldCheckmarkOutline,
+      calendarOutline,
+      alertCircleOutline,
+      addCircleOutline,
+      flagOutline,
+      createOutline,
+      checkmarkOutline,
+      closeOutline
+    });
   }
 
-  ngOnInit() {
-    this.carregarDados();
+  async ngOnInit() {
+    await this.carregarDados();
   }
 
-  ionViewWillEnter() {
-    this.carregarDados();
+  async ionViewWillEnter() {
+    await this.carregarDados();
   }
 
-  carregarDados() {
+  async carregarDados() {
+    await this.userStorage.carregarUsuarioAtual();
+
     // Carregar salário
-    const renda = localStorage.getItem('organizai_renda_mensal');
+    const renda = this.userStorage.getItem('renda_mensal');
     if (renda) {
       this.rendaMensal = parseFloat(renda);
       this.salarioInput = this.rendaMensal.toString();
+      this.editandoSalario = false;
     } else {
       this.editandoSalario = true;
     }
@@ -59,7 +97,7 @@ export class VisaoGeralPage implements OnInit {
 
     // Carregar Assinaturas
     try {
-      assinaturas = JSON.parse(localStorage.getItem('organizai_assinaturas') || '[]');
+      assinaturas = JSON.parse(this.userStorage.getItem('assinaturas') || '[]');
       this.totalAssinaturas = assinaturas
         .filter((a: any) => a.status === 'ativo')
         .reduce((sum: number, a: any) => {
@@ -72,24 +110,50 @@ export class VisaoGeralPage implements OnInit {
 
     // Carregar Contas Fixas
     try {
-      contas = JSON.parse(localStorage.getItem('organizai_contas_fixas') || '[]');
+      contas = JSON.parse(this.userStorage.getItem('contas_fixas') || '[]');
       this.totalContasFixas = contas.reduce((sum: number, c: any) => sum + Number(c.valor), 0);
     } catch { this.totalContasFixas = 0; }
 
     // Carregar Boletos
     try {
-      boletos = JSON.parse(localStorage.getItem('organizai_boletos') || '[]');
+      boletos = JSON.parse(this.userStorage.getItem('boletos') || '[]');
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      const fimDoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
+
       this.totalBoletosPendentes = boletos
-        .filter((b: any) => b.status === 'pendente' || b.status === 'vencido')
+        .filter((b: any) => {
+          if (b.status === 'pago') return false;
+          if (!b.vencimento) return true;
+          const d = new Date(b.vencimento + 'T00:00:00');
+          return d <= fimDoMes;
+        })
         .reduce((sum: number, b: any) => sum + Number(b.valor), 0);
     } catch { this.totalBoletosPendentes = 0; }
+
+    // Carregar total guardado em Metas via Supabase
+    try {
+      const [metas, pagamentos] = await Promise.all([
+        this.metasService.listarMetas(),
+        this.metasService.listarTodosPagamentosUsuario()
+      ]);
+
+      let totalGuardado = 0;
+      for (const m of metas) {
+        const pagos = pagamentos.filter(p => p.meta_id === m.id && p.pago).length;
+        totalGuardado += (pagos * (m.valor_por_periodo || 0));
+      }
+      this.totalPoupadoMetas = totalGuardado;
+    } catch {
+      this.totalPoupadoMetas = 0;
+    }
 
     this.calcularProximosVencimentos(contas, boletos);
   }
 
   calcularProximosVencimentos(contas: any[], boletos: any[]) {
     const hoje = new Date();
-    hoje.setHours(0,0,0,0);
+    hoje.setHours(0, 0, 0, 0);
     const lista: Vencimento[] = [];
 
     // Contas Fixas
@@ -103,7 +167,6 @@ export class VisaoGeralPage implements OnInit {
 
     // Boletos
     boletos.filter(b => b.status === 'pendente' || b.status === 'vencido').forEach(b => {
-      // vencimento é "DD/MM/YYYY" ou data válida
       const partes = b.vencimento.split('/');
       let dias = 0;
       if (partes.length === 3) {
@@ -124,7 +187,7 @@ export class VisaoGeralPage implements OnInit {
     const val = parseFloat(this.salarioInput);
     if (!isNaN(val) && val >= 0) {
       this.rendaMensal = val;
-      localStorage.setItem('organizai_renda_mensal', val.toString());
+      this.userStorage.setItem('renda_mensal', val.toString());
       this.editandoSalario = false;
     }
   }
@@ -142,6 +205,51 @@ export class VisaoGeralPage implements OnInit {
     return Math.min(Math.round((this.totalGastos / this.rendaMensal) * 100), 100);
   }
 
+  get percentualLivre(): number {
+    if (this.rendaMensal <= 0) return 0;
+    return Math.max(0, Math.round((this.saldoRestante / this.rendaMensal) * 100));
+  }
+
+  get percentualContasFixas(): number {
+    if (this.rendaMensal <= 0) return 0;
+    return Math.min(100, Math.round((this.totalContasFixas / this.rendaMensal) * 100));
+  }
+
+  get percentualBoletos(): number {
+    if (this.rendaMensal <= 0) return 0;
+    return Math.min(100, Math.round((this.totalBoletosPendentes / this.rendaMensal) * 100));
+  }
+
+  get percentualAssinaturas(): number {
+    if (this.rendaMensal <= 0) return 0;
+    return Math.min(100, Math.round((this.totalAssinaturas / this.rendaMensal) * 100));
+  }
+
+  // Gradiente cônico para o gráfico Donut financeiro
+  get donutGradient(): string {
+    const total = this.totalGastos;
+    if (this.rendaMensal <= 0) {
+      return 'conic-gradient(#D93025 0% 100%)';
+    }
+
+    const base = Math.max(this.rendaMensal, total);
+    const pLivre = Math.max(0, (this.saldoRestante / base) * 100);
+    const pContas = (this.totalContasFixas / base) * 100;
+    const pBoletos = (this.totalBoletosPendentes / base) * 100;
+    const pAssin = (this.totalAssinaturas / base) * 100;
+
+    const stop1 = Number(pLivre.toFixed(1));
+    const stop2 = Number((stop1 + pContas).toFixed(1));
+    const stop3 = Number((stop2 + pBoletos).toFixed(1));
+
+    return `conic-gradient(
+      #1E5C3A 0% ${stop1}%,
+      #F59E0B ${stop1}% ${stop2}%,
+      #D93025 ${stop2}% ${stop3}%,
+      #7C3AED ${stop3}% 100%
+    )`;
+  }
+
   // Regra 50-30-20
   get regraNecessidades() { return this.rendaMensal * 0.50; }
   get regraDesejos() { return this.rendaMensal * 0.30; }
@@ -153,7 +261,7 @@ export class VisaoGeralPage implements OnInit {
   }
 
   fmt(v: number): string {
-    return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    return (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
 
   voltar() {

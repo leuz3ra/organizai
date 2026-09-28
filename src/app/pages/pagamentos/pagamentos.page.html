@@ -5,7 +5,6 @@
     <div class="topo-left">
       <ion-icon name="arrow-back-outline" class="btn-voltar" (click)="voltar()"></ion-icon>
       <div class="topo-logo">
-        <img src="assets/icon.png" alt="OrganizAí">
         <span>Pagamentos</span>
       </div>
     </div>
@@ -39,6 +38,29 @@
   </div>
 
 
+  <!-- DESTAQUE PARCELAMENTOS ATIVOS -->
+  <div class="parcelamentos-banner" (click)="irParaParcelamentos()">
+    <div class="p-banner__left">
+      <div class="p-banner__icon">
+        <ion-icon name="layers-outline"></ion-icon>
+      </div>
+      <div class="p-banner__texto">
+        <h4>Compras Parceladas</h4>
+        <p *ngIf="qtdParcelamentosAtivos > 0">
+          {{ qtdParcelamentosAtivos }} compra(s) ativa(s) · Resta {{ formatarMoeda(totalDividaParcelamentos) }}
+        </p>
+        <p *ngIf="qtdParcelamentosAtivos === 0">
+          Gerencie carnês e compras divididas em parcelas
+        </p>
+      </div>
+    </div>
+    <div class="p-banner__right">
+      <span class="p-banner__val" *ngIf="qtdParcelamentosAtivos > 0">{{ formatarMoeda(totalParcelasMes) }}/mês</span>
+      <ion-icon name="chevron-forward-outline" class="p-banner__arrow"></ion-icon>
+    </div>
+  </div>
+
+
   <!-- SEÇÃO CATEGORIAS -->
   <p class="section-label">Categorias</p>
 
@@ -60,7 +82,7 @@
       </div>
     </div>
 
-    <!-- BOLETOS -->
+    <!-- BOLETOS E PARCELAMENTOS -->
     <div class="cat-card cat-card--danger" (click)="irParaBoletos()">
       <div class="cat-card__top">
         <div class="cat-card__icon-wrap">
@@ -69,9 +91,9 @@
         <ion-icon name="arrow-forward-outline" class="cat-card__arrow"></ion-icon>
       </div>
       <h3>Boletos</h3>
-      <p>Pagamentos avulsos<br>com data de vencimento</p>
+      <p>Boletos avulsos, carnês<br>e despesas divididas</p>
       <div class="cat-card__valor">
-        <span>Em aberto</span>
+        <span>Em aberto este mês</span>
         <strong>{{ formatarMoeda(totalBoletos) }}</strong>
       </div>
     </div>
@@ -98,7 +120,7 @@
   <!-- DICA RÁPIDA -->
   <div class="dica-box">
     <ion-icon name="trending-up-outline"></ion-icon>
-    <p>💡 <strong>Dica:</strong> Revise suas assinaturas mensalmente. Muitas pessoas pagam por serviços que mal usam!</p>
+    <p>💡 <strong>Dica:</strong> Acompanhe suas compras parceladas para evitar acúmulo de faturas nos próximos meses!</p>
   </div>
 
   <div style="height: 48px;"></div>

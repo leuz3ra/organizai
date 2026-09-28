@@ -5,10 +5,15 @@
   <!-- ============================================= -->
   <div class="topo">
     <div class="topo-logo">
-      <img src="assets/icon.png" alt="OrganizAí">
       <span>OrganizAí</span>
     </div>
     <div class="topo-actions">
+      <ion-icon 
+        [name]="ocultarValores ? 'eye-off-outline' : 'eye-outline'" 
+        class="topo-btn" 
+        (click)="toggleOcultarValores()" 
+        [title]="ocultarValores ? 'Mostrar valores' : 'Ocultar valores'">
+      </ion-icon>
       <ion-icon name="notifications-outline" class="topo-btn" (click)="abrirNotificacoes()" title="Notificações"></ion-icon>
       <ion-icon name="settings-outline" class="topo-btn" (click)="abrirConfiguracoes()" title="Configurações"></ion-icon>
       <ion-icon name="log-out-outline" class="topo-btn topo-btn--logout" (click)="logout()" title="Sair"></ion-icon>
@@ -23,7 +28,88 @@
     <div class="hero-text">
       <p class="hero-label">Painel Financeiro</p>
       <h2 class="hero-title">{{ saudacao }}</h2>
-      <p class="hero-sub">Acompanhe seu patrimônio e simule suas finanças.</p>
+      <p class="hero-sub">Seu dinheiro organizado com simplicidade e clareza.</p>
+    </div>
+  </div>
+
+
+  <!-- ============================================= -->
+  <!-- CARD RESUMO FINANCEIRO INTELIGENTE (SNAPSHOT) -->
+  <!-- ============================================= -->
+  <div class="resumo-card-container">
+    <div class="resumo-card">
+      <div class="resumo-card__topo">
+        <div class="resumo-card__titulo-box">
+          <img src="assets/organizai.png" alt="Logo" class="resumo-card__logo">
+          <span>Saldo Livre Estimado</span>
+        </div>
+        <button class="resumo-card__eye-btn" (click)="toggleOcultarValores()" type="button">
+          <ion-icon [name]="ocultarValores ? 'eye-off' : 'eye'"></ion-icon>
+        </button>
+      </div>
+
+      <div class="resumo-card__valor-principal">
+        <h1 [class.negativo]="saldoLivre < 0 && !ocultarValores">
+          {{ formatarMoeda(saldoLivre) }}
+        </h1>
+        <span class="resumo-card__subtag" *ngIf="rendaMensal > 0">
+          Renda menos despesas previstas
+        </span>
+        <button class="btn-definir-renda" *ngIf="rendaMensal === 0" (click)="abrirVisaoGeral()">
+          + Cadastrar Renda Mensal
+        </button>
+      </div>
+
+      <!-- GRID COM INDICADORES RÁPIDOS -->
+      <div class="resumo-metricas">
+        <div class="resumo-metrica" (click)="abrirVisaoGeral()">
+          <span class="metrica-label">Renda</span>
+          <strong class="metrica-valor">{{ formatarMoeda(rendaMensal) }}</strong>
+        </div>
+
+        <div class="resumo-metrica" (click)="abrirPagamentos()">
+          <span class="metrica-label">A Pagar</span>
+          <strong class="metrica-valor metrica-valor--alerta">
+            {{ formatarMoeda(totalAPagar) }}
+          </strong>
+        </div>
+
+        <div class="resumo-metrica" (click)="abrirMetas()">
+          <span class="metrica-label">Metas</span>
+          <strong class="metrica-valor metrica-valor--accent">
+            {{ formatarMoeda(metasPoupadoTotal) }}
+          </strong>
+        </div>
+      </div>
+
+      <!-- ALERTA DE VENCIMENTO INTELIGENTE (RADAR) -->
+      <div 
+        class="radar-alerta" 
+        *ngIf="alertaVencimento" 
+        [ngClass]="'radar-alerta--' + alertaVencimento.tipo"
+        (click)="abrirPagamentos()">
+        <ion-icon 
+          [name]="alertaVencimento.tipo === 'perigo' || alertaVencimento.tipo === 'alerta' ? 'alert-circle-outline' : 'shield-checkmark-outline'">
+        </ion-icon>
+        <span class="radar-alerta__texto">{{ alertaVencimento.mensagem }}</span>
+        <ion-icon name="arrow-forward-outline" class="radar-alerta__seta"></ion-icon>
+      </div>
+
+      <!-- ATALHOS RÁPIDOS (ECONOMIZAM CLIQUES) -->
+      <div class="atalhos-rapidos">
+        <button class="atalho-btn" (click)="abrirBoletos()">
+          <ion-icon name="card-outline"></ion-icon>
+          <span>Boletos</span>
+        </button>
+        <button class="atalho-btn" (click)="abrirContasFixas()">
+          <ion-icon name="calendar-outline"></ion-icon>
+          <span>Contas Fixas</span>
+        </button>
+        <button class="atalho-btn" (click)="abrirMetas()">
+          <ion-icon name="flag-outline"></ion-icon>
+          <span>Metas</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -31,6 +117,8 @@
   <!-- ============================================= -->
   <!-- CARDS DE NAVEGAÇÃO                            -->
   <!-- ============================================= -->
+  <p class="section-label">Navegação Principal</p>
+
   <div class="nav-cards">
 
     <div class="nav-card" (click)="abrirVisaoGeral()">
@@ -38,7 +126,7 @@
         <ion-icon name="pie-chart-outline"></ion-icon>
       </div>
       <h4>Visão Geral</h4>
-      <p>Análise de renda e gastos</p>
+      <p>Análise de renda e regra 50-30-20</p>
       <ion-icon name="arrow-forward-outline" class="nav-card__arrow"></ion-icon>
     </div>
 
@@ -47,7 +135,7 @@
         <ion-icon name="flag-outline"></ion-icon>
       </div>
       <h4>Metas</h4>
-      <p>Objetivos financeiros</p>
+      <p>{{ totalMetasAtivas > 0 ? (totalMetasAtivas + ' objetivo(s) ativos') : 'Objetivos financeiros' }}</p>
       <ion-icon name="arrow-forward-outline" class="nav-card__arrow"></ion-icon>
     </div>
 
@@ -56,7 +144,7 @@
         <ion-icon name="card-outline"></ion-icon>
       </div>
       <h4>Pagamentos</h4>
-      <p>Boletos e contas</p>
+      <p>Boletos, assinaturas e contas</p>
       <ion-icon name="arrow-forward-outline" class="nav-card__arrow"></ion-icon>
     </div>
 
@@ -65,7 +153,7 @@
         <ion-icon name="bulb-outline"></ion-icon>
       </div>
       <h4>Dicas</h4>
-      <p>Educação financeira</p>
+      <p>Educação financeira e quiz</p>
       <ion-icon name="arrow-forward-outline" class="nav-card__arrow"></ion-icon>
     </div>
 
@@ -73,13 +161,34 @@
 
 
   <!-- ============================================= -->
-  <!-- FERRAMENTAS PRÁTICAS                          -->
+  <!-- FERRAMENTAS PRÁTICAS (ABAS COMPACTAS)        -->
   <!-- ============================================= -->
-  <p class="section-label">Ferramentas</p>
+  <p class="section-label">Ferramentas Práticas</p>
+
+  <div class="ferramentas-tabs-container">
+    <div class="ferramentas-tabs">
+      <button 
+        type="button"
+        class="ferramenta-tab-btn" 
+        [class.ativo]="ferramentaAtiva === 'conversor'"
+        (click)="ferramentaAtiva = 'conversor'">
+        <ion-icon name="swap-horizontal"></ion-icon>
+        <span>Conversor</span>
+      </button>
+      <button 
+        type="button"
+        class="ferramenta-tab-btn" 
+        [class.ativo]="ferramentaAtiva === 'calculadora'"
+        (click)="ferramentaAtiva = 'calculadora'">
+        <ion-icon name="calculator-outline"></ion-icon>
+        <span>Calculadora %</span>
+      </button>
+    </div>
+  </div>
 
 
   <!-- CONVERSOR DE MOEDAS COM BANDEIRAS REAIS -->
-  <div class="tool-card">
+  <div class="tool-card" *ngIf="ferramentaAtiva === 'conversor'">
 
     <div class="tool-card__header">
       <ion-icon name="swap-horizontal" class="tool-card__icon"></ion-icon>
@@ -142,7 +251,7 @@
 
 
   <!-- CALCULADORA DE PERCENTUAL (ROBUSTA & TEMPO REAL) -->
-  <div class="tool-card">
+  <div class="tool-card" *ngIf="ferramentaAtiva === 'calculadora'">
 
     <div class="tool-card__header">
       <ion-icon name="calculator-outline" class="tool-card__icon"></ion-icon>
@@ -335,20 +444,6 @@
             <span>{{ darkModeAtivo ? 'Ativado' : 'Desativado' }}</span>
           </div>
           <div class="toggle-wrap" [class.ativo]="darkModeAtivo">
-            <div class="toggle-knob"></div>
-          </div>
-        </div>
-
-        <!-- NOTIFICAÇÕES PUSH -->
-        <div class="config-item" (click)="togglePushNotificacoes()">
-          <div class="config-icon" [style.background]="pushNotificacoesAtivo ? '#EFE8FE' : '#F1F5F9'">
-            <ion-icon [name]="pushNotificacoesAtivo ? 'notifications' : 'notifications-off'" [style.color]="pushNotificacoesAtivo ? '#7C3AED' : '#94A3B8'"></ion-icon>
-          </div>
-          <div class="config-info">
-            <strong>Notificações Push</strong>
-            <span>{{ pushNotificacoesAtivo ? 'Ativadas' : 'Desativadas' }}</span>
-          </div>
-          <div class="toggle-wrap" [class.ativo]="pushNotificacoesAtivo">
             <div class="toggle-knob"></div>
           </div>
         </div>

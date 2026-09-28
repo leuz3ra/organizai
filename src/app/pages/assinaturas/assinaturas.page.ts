@@ -10,6 +10,7 @@ import {
   calendarOutline, chevronDownOutline, pauseOutline,
   playOutline, refreshOutline, searchOutline, banOutline
 } from 'ionicons/icons';
+import { UserStorageService } from '../../services/user-storage.service';
 
 export type CicloAssinatura = 'mensal' | 'anual' | 'semanal';
 export type StatusAssinatura = 'ativo' | 'pausado' | 'cancelado';
@@ -125,7 +126,10 @@ export class AssinaturasPage implements OnInit {
   // Se o serviço tem logo oficial (não é customizado)
   get temLogoForm(): boolean { return !!this.novaForm.logoUrl && this.novaForm.isPopular; }
 
-  constructor(private router: Router) {
+  constructor(
+    private router: Router,
+    private userStorage: UserStorageService
+  ) {
     addIcons({
       arrowBackOutline, addOutline, closeOutline, trashOutline,
       tvOutline, checkmarkCircleOutline, ellipseOutline,
@@ -134,20 +138,27 @@ export class AssinaturasPage implements OnInit {
     });
   }
 
-  ngOnInit() { this.carregar(); }
-  ionViewWillEnter() { this.carregar(); }
+  async ngOnInit() {
+    await this.userStorage.carregarUsuarioAtual();
+    this.carregar();
+  }
+
+  async ionViewWillEnter() {
+    await this.userStorage.carregarUsuarioAtual();
+    this.carregar();
+  }
 
   // ── CRUD ───────────────────────────────────────────────────
 
   carregar() {
     try {
-      const raw = localStorage.getItem('organizai_assinaturas');
+      const raw = this.userStorage.getItem('assinaturas');
       this.assinaturas = raw ? JSON.parse(raw) : this.dadosIniciais();
     } catch { this.assinaturas = this.dadosIniciais(); }
   }
 
   salvarLS() {
-    localStorage.setItem('organizai_assinaturas', JSON.stringify(this.assinaturas));
+    this.userStorage.setItem('assinaturas', JSON.stringify(this.assinaturas));
   }
 
   dadosIniciais(): Assinatura[] {

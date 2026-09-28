@@ -10,7 +10,7 @@ ion-content {
   justify-content: space-between;
   align-items: center;
   background: var(--c-surface);
-  padding: 13px 20px;
+  padding: calc(13px + var(--ion-safe-area-top, env(safe-area-inset-top, 0px))) 20px 13px;
   border-bottom: 1px solid var(--c-border);
   position: sticky;
   top: 0;

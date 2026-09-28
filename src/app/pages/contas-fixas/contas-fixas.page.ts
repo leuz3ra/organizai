@@ -9,8 +9,9 @@ import {
   homeOutline, checkmarkCircleOutline, ellipseOutline,
   waterOutline, flashOutline, wifiOutline, carOutline,
   calendarOutline, refreshOutline, cartOutline, carSportOutline,
-  busOutline, medkitOutline, appsOutline
+  busOutline, medkitOutline, appsOutline, removeCircleOutline
 } from 'ionicons/icons';
+import { UserStorageService } from '../../services/user-storage.service';
 
 export type CatCF = 'moradia' | 'agua' | 'energia' | 'internet' | 'transporte' | 'saude' | 'mercado' | 'combustivel' | 'outros';
 export type StatusCF = 'pago' | 'pendente';
@@ -54,25 +55,35 @@ export class ContasFixasPage implements OnInit {
 
   novaForm = { descricao: '', valor: null as number | null, diaVencimento: 1, categoria: 'outros' as CatCF };
 
-  constructor(private router: Router) {
+  constructor(
+    private router: Router,
+    private userStorage: UserStorageService
+  ) {
     addIcons({ arrowBackOutline, addOutline, closeOutline, trashOutline,
       homeOutline, checkmarkCircleOutline, ellipseOutline,
       waterOutline, flashOutline, wifiOutline, carOutline,
       calendarOutline, refreshOutline, cartOutline, carSportOutline,
-      busOutline, medkitOutline, appsOutline });
+      busOutline, medkitOutline, appsOutline, removeCircleOutline });
   }
 
-  ngOnInit() { this.carregar(); }
-  ionViewWillEnter() { this.carregar(); }
+  async ngOnInit() {
+    await this.userStorage.carregarUsuarioAtual();
+    this.carregar();
+  }
+
+  async ionViewWillEnter() {
+    await this.userStorage.carregarUsuarioAtual();
+    this.carregar();
+  }
 
   carregar() {
     try {
-      const raw = localStorage.getItem('organizai_contas_fixas');
+      const raw = this.userStorage.getItem('contas_fixas');
       this.contas = raw ? JSON.parse(raw) : this.dadosIniciais();
     } catch { this.contas = this.dadosIniciais(); }
   }
 
-  salvarLS() { localStorage.setItem('organizai_contas_fixas', JSON.stringify(this.contas)); }
+  salvarLS() { this.userStorage.setItem('contas_fixas', JSON.stringify(this.contas)); }
 
   dadosIniciais(): ContaFixa[] {
     return [];

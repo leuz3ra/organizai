@@ -3,7 +3,8 @@ ion-content { --background: var(--c-bg); }
 /* ============================================================ TOPO ============================================================ */
 .topo {
   display: flex; justify-content: space-between; align-items: center;
-  background: var(--c-surface); padding: 13px 20px;
+  background: var(--c-surface); 
+  padding: calc(13px + var(--ion-safe-area-top, env(safe-area-inset-top, 0px))) 20px 13px;
   border-bottom: 1px solid var(--c-border);
   position: sticky; top: 0; z-index: 100;
 
@@ -198,3 +199,80 @@ ion-content { --background: var(--c-bg); }
     strong { font-weight: 700; }
   }
 }
+
+/* ============================================================ PARCELAMENTOS BANNER ============================================================ */
+.parcelamentos-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 16px 16px 0;
+  padding: 14px 16px;
+  background: var(--c-surface);
+  border: 1.5px solid rgba(124, 58, 237, 0.25);
+  border-radius: var(--r-lg);
+  cursor: pointer;
+  transition: all var(--t-fast);
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.06);
+
+  &:active {
+    transform: scale(0.99);
+    background: rgba(124, 58, 237, 0.04);
+  }
+
+  .p-banner__left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .p-banner__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--r-md);
+    background: linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    ion-icon {
+      font-size: 20px;
+      color: #fff;
+    }
+  }
+
+  .p-banner__texto {
+    h4 {
+      margin: 0 0 2px;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--c-text-primary);
+    }
+
+    p {
+      margin: 0;
+      font-size: 11px;
+      color: var(--c-text-secondary);
+      font-weight: 500;
+    }
+  }
+
+  .p-banner__right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+
+    .p-banner__val {
+      font-size: 13px;
+      font-weight: 800;
+      color: #7C3AED;
+    }
+
+    .p-banner__arrow {
+      font-size: 18px;
+      color: var(--c-text-muted);
+    }
+  }
+}
+

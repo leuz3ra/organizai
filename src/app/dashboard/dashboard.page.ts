@@ -34,11 +34,23 @@ import {
   sunny,
   eye,
   eyeOff,
+  eyeOutline,
+  eyeOffOutline,
   notifications,
-  notificationsOff
+  notificationsOff,
+  alertCircleOutline,
+  trendingUpOutline,
+  addCircleOutline,
+  calendarOutline,
+  shieldCheckmarkOutline,
+  timeOutline
 } from 'ionicons/icons';
 
 import { SupabaseService } from '../services/supabase.service';
+import { UserStorageService } from '../services/user-storage.service';
+import { MetasService } from '../services/metas.service';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
 
 export interface MoedaInfo {
   codigo: string;
@@ -67,17 +79,40 @@ export class DashboardPage implements OnInit {
   nomeUsuario: string = '';
 
   // =====================================================
+  // RESUMO FINANCEIRO EM TEMPO REAL
+  // =====================================================
+  ocultarValores = false;
+  rendaMensal = 0;
+  totalAPagar = 0;
+  totalBoletosPendentes = 0;
+  totalContasFixasPendentes = 0;
+  saldoLivre = 0;
+  qtdBoletosAbertos = 0;
+  qtdContasAbertas = 0;
+
+  alertaVencimento: {
+    mensagem: string;
+    tipo: 'perigo' | 'alerta' | 'sucesso' | 'ok';
+    dias?: number;
+  } | null = null;
+
+  metasPoupadoTotal = 0;
+  metasObjetivoTotal = 0;
+  metasProgressoPct = 0;
+  totalMetasAtivas = 0;
+
+  ferramentaAtiva: 'conversor' | 'calculadora' = 'conversor';
+
+  // =====================================================
   // CONFIGURAÇÕES GERAIS E NOTIFICAÇÕES
   // =====================================================
   darkModeAtivo = false;
-  pushNotificacoesAtivo = true;
   mostrarConfiguracoes = false;
   mostrarNotificacoes = false;
 
   // =====================================================
   // CONVERSOR DE MOEDAS COM BANDEIRAS REAIS
   // =====================================================
-
   valorBRL: number | null = null;
   valorUSD: number | null = null;
 
@@ -139,9 +174,8 @@ export class DashboardPage implements OnInit {
   };
 
   // =====================================================
-  // CALCULADORA DE PERCENTUAL ROBUSTA E EM TEMPO REAL
+  // CALCULADORA DE PERCENTUAL
   // =====================================================
-
   valorInicial: number | null = null;
   percentual: number | null = null;
   resultado: number | null = null;
@@ -151,13 +185,13 @@ export class DashboardPage implements OnInit {
   // =====================================================
   // MODAL LOGOUT
   // =====================================================
-
   mostrarLogout = false;
-
 
   constructor(
     private router: Router,
-    private supabaseService: SupabaseService
+    private supabaseService: SupabaseService,
+    private userStorage: UserStorageService,
+    private metasService: MetasService
   ) {
     addIcons({
       logOutOutline,
@@ -184,43 +218,239 @@ export class DashboardPage implements OnInit {
       sunny,
       eye,
       eyeOff,
+      eyeOutline,
+      eyeOffOutline,
       notifications,
-      notificationsOff
+      notificationsOff,
+      alertCircleOutline,
+      trendingUpOutline,
+      addCircleOutline,
+      calendarOutline,
+      shieldCheckmarkOutline,
+      timeOutline
     });
   }
 
   async ngOnInit() {
     this.carregarTemaEscuro();
+    this.carregarPreferenciaPrivacidade();
     await this.carregarUsuario();
+    await this.carregarResumoFinanceiro();
   }
 
   async ionViewWillEnter() {
     this.carregarTemaEscuro();
+    this.carregarPreferenciaPrivacidade();
     await this.carregarUsuario();
+    await this.carregarResumoFinanceiro();
+  }
+
+  // =====================================================
+  // CARREGAR RESUMO FINANCEIRO
+  // =====================================================
+  async carregarResumoFinanceiro() {
+    await this.userStorage.carregarUsuarioAtual();
+
+    // 1. Renda
+    const renda = this.userStorage.getItem('renda_mensal');
+    this.rendaMensal = renda ? parseFloat(renda) : 0;
+
+    // 2. Boletos
+    let boletos: any[] = [];
+    try {
+      boletos = JSON.parse(this.userStorage.getItem('boletos') || '[]');
+    } catch { boletos = []; }
+
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const fimDoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
+
+    const boletosPendentes = boletos.filter((b: any) => {
+      if (b.status === 'pago') return false;
+      if (!b.vencimento) return true;
+      const d = new Date(b.vencimento + 'T00:00:00');
+      return d <= fimDoMes;
+    });
+    this.qtdBoletosAbertos = boletosPendentes.length;
+    this.totalBoletosPendentes = boletosPendentes.reduce((s: number, b: any) => s + (Number(b.valor) || 0), 0);
+
+    // 3. Contas Fixas
+    let contas: any[] = [];
+    try {
+      contas = JSON.parse(this.userStorage.getItem('contas_fixas') || '[]');
+    } catch { contas = []; }
+
+    const contasPendentes = contas.filter((c: any) => c.status !== 'pago');
+    this.qtdContasAbertas = contasPendentes.length;
+    this.totalContasFixasPendentes = contasPendentes.reduce((s: number, c: any) => s + (Number(c.valor) || 0), 0);
+
+    // 4. Assinaturas
+    let assinaturas: any[] = [];
+    try {
+      assinaturas = JSON.parse(this.userStorage.getItem('assinaturas') || '[]');
+    } catch { assinaturas = []; }
+    const totalAssinaturasAtivas = assinaturas
+      .filter((a: any) => a.status === 'ativo')
+      .reduce((s: number, a: any) => {
+        let v = Number(a.valor) || 0;
+        if (a.ciclo === 'anual') v = v / 12;
+        if (a.ciclo === 'semanal') v = v * 4.33;
+        return s + v;
+      }, 0);
+
+    // Total a pagar no mês
+    this.totalAPagar = this.totalBoletosPendentes + this.totalContasFixasPendentes + totalAssinaturasAtivas;
+    this.saldoLivre = this.rendaMensal - this.totalAPagar;
+
+    // 5. Radar de Vencimentos
+    this.calcularAlertaVencimento(boletosPendentes, contasPendentes);
+
+    // 6. Metas do Supabase
+    try {
+      const [metas, pagamentos] = await Promise.all([
+        this.metasService.listarMetas(),
+        this.metasService.listarTodosPagamentosUsuario()
+      ]);
+
+      this.totalMetasAtivas = metas.length;
+      let totalObj = 0;
+      let totalPoup = 0;
+
+      for (const m of metas) {
+        totalObj += (m.valor_total || 0);
+        const pagos = pagamentos.filter(p => p.meta_id === m.id && p.pago).length;
+        totalPoup += (pagos * (m.valor_por_periodo || 0));
+      }
+
+      this.metasObjetivoTotal = totalObj;
+      this.metasPoupadoTotal = totalPoup;
+      this.metasProgressoPct = totalObj > 0 ? Math.min(100, Math.round((totalPoup / totalObj) * 100)) : 0;
+    } catch {
+      // Metas não configuradas ou erro silencioso
+    }
+  }
+
+  calcularAlertaVencimento(boletos: any[], contas: any[]) {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    // Checa se há boletos vencidos
+    const vencidos = boletos.filter(b => {
+      const d = new Date(b.vencimento + 'T00:00:00');
+      return d < hoje;
+    });
+
+    if (vencidos.length > 0) {
+      const soma = vencidos.reduce((s, b) => s + Number(b.valor || 0), 0);
+      this.alertaVencimento = {
+        mensagem: `${vencidos.length} ${vencidos.length === 1 ? 'conta vencida' : 'contas vencidas'} (${this.formatarMoeda(soma)})! Pague para evitar juros.`,
+        tipo: 'perigo'
+      };
+      return;
+    }
+
+    // Checa se há contas vencendo hoje
+    const vencemHoje = boletos.filter(b => {
+      const d = new Date(b.vencimento + 'T00:00:00');
+      return d.getTime() === hoje.getTime();
+    });
+
+    if (vencemHoje.length > 0) {
+      this.alertaVencimento = {
+        mensagem: `Atenção: ${vencemHoje[0].descricao} vence HOJE (${this.formatarMoeda(vencemHoje[0].valor)})!`,
+        tipo: 'alerta'
+      };
+      return;
+    }
+
+    // Checa próximos vencimentos em até 3 dias
+    const proximos: { nome: string; valor: number; dias: number }[] = [];
+
+    boletos.forEach(b => {
+      const d = new Date(b.vencimento + 'T00:00:00');
+      const dias = Math.ceil((d.getTime() - hoje.getTime()) / 86400000);
+      if (dias > 0 && dias <= 3) {
+        proximos.push({ nome: b.descricao, valor: Number(b.valor), dias });
+      }
+    });
+
+    contas.forEach(c => {
+      let d = new Date(hoje.getFullYear(), hoje.getMonth(), c.diaVencimento);
+      if (d <= hoje) d = new Date(hoje.getFullYear(), hoje.getMonth() + 1, c.diaVencimento);
+      const dias = Math.ceil((d.getTime() - hoje.getTime()) / 86400000);
+      if (dias > 0 && dias <= 3) {
+        proximos.push({ nome: c.descricao, valor: Number(c.valor), dias });
+      }
+    });
+
+    if (proximos.length > 0) {
+      proximos.sort((a, b) => a.dias - b.dias);
+      const prox = proximos[0];
+      const txtDias = prox.dias === 1 ? 'amanhã' : `em ${prox.dias} dias`;
+      this.alertaVencimento = {
+        mensagem: `${prox.nome} (${this.formatarMoeda(prox.valor)}) vence ${txtDias}.`,
+        tipo: 'alerta',
+        dias: prox.dias
+      };
+      return;
+    }
+
+    if (this.totalAPagar > 0) {
+      this.alertaVencimento = {
+        mensagem: 'Tudo sob controle! Nenhum vencimento urgente nos próximos 3 dias.',
+        tipo: 'sucesso'
+      };
+    } else {
+      this.alertaVencimento = {
+        mensagem: 'Nenhuma conta pendente para pagar este mês.',
+        tipo: 'ok'
+      };
+    }
+  }
+
+  // =====================================================
+  // PRIVACIDADE & FORMATAÇÃO
+  // =====================================================
+  toggleOcultarValores() {
+    this.ocultarValores = !this.ocultarValores;
+    localStorage.setItem('ocultarValores', this.ocultarValores ? 'true' : 'false');
+  }
+
+  carregarPreferenciaPrivacidade() {
+    this.ocultarValores = localStorage.getItem('ocultarValores') === 'true';
+  }
+
+  formatarMoeda(valor: number): string {
+    if (this.ocultarValores) {
+      return 'R$ •••••';
+    }
+    return (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
 
   // =====================================================
   // TEMA ESCURO
   // =====================================================
-
   carregarTemaEscuro() {
     const isDark = localStorage.getItem('temaEscuro') === 'true';
     this.darkModeAtivo = isDark;
     document.body.classList.toggle('dark-mode', isDark);
-
-    const isPush = localStorage.getItem('pushNotificacoes') !== 'false';
-    this.pushNotificacoesAtivo = isPush;
   }
 
   toggleDarkMode() {
     this.darkModeAtivo = !this.darkModeAtivo;
     document.body.classList.toggle('dark-mode', this.darkModeAtivo);
     localStorage.setItem('temaEscuro', this.darkModeAtivo ? 'true' : 'false');
+    this.atualizarStatusBarStyle();
   }
 
-  togglePushNotificacoes() {
-    this.pushNotificacoesAtivo = !this.pushNotificacoesAtivo;
-    localStorage.setItem('pushNotificacoes', this.pushNotificacoesAtivo ? 'true' : 'false');
+  private async atualizarStatusBarStyle() {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await StatusBar.setStyle({
+          style: this.darkModeAtivo ? Style.Dark : Style.Light
+        });
+      } catch (e) {}
+    }
   }
 
   abrirConfiguracoes() {
@@ -240,14 +470,12 @@ export class DashboardPage implements OnInit {
   }
 
   // =====================================================
-  // CARREGAR USUÁRIO CADASTRADO E MONTAR SAUDAÇÃO
+  // USUÁRIO & SAUDAÇÃO
   // =====================================================
-
   async carregarUsuario() {
     try {
       const user = await this.supabaseService.usuarioAtual();
       if (user) {
-        // Busca o nome do metadata do cadastro
         const nomeCompleto =
           user.user_metadata?.['nome'] ||
           user.user_metadata?.['full_name'] ||
@@ -255,7 +483,6 @@ export class DashboardPage implements OnInit {
           '';
 
         if (nomeCompleto && nomeCompleto.trim()) {
-          // Extrai o primeiro nome capitalizado
           const primeiro = nomeCompleto.trim().split(' ')[0];
           this.nomeUsuario = primeiro.charAt(0).toUpperCase() + primeiro.slice(1).toLowerCase();
         } else if (user.email) {
@@ -287,11 +514,9 @@ export class DashboardPage implements OnInit {
     }
   }
 
-
   // =====================================================
-  // MÉTODOS DO CONVERSOR
+  // CONVERSOR
   // =====================================================
-
   getMoeda(codigo: string): MoedaInfo {
     return this.moedas.find(m => m.codigo === codigo) || this.moedas[0];
   }
@@ -341,11 +566,9 @@ export class DashboardPage implements OnInit {
     this.converterBRL();
   }
 
-
   // =====================================================
-  // CALCULADORA DE PERCENTUAL (CÁLCULO EXATO & INSTANTÂNEO)
+  // CALCULADORA DE PERCENTUAL
   // =====================================================
-
   setModoCalc(modo: 'somar' | 'subtrair' | 'apenas') {
     this.modoCalc = modo;
     this.calcularPercentual();
@@ -382,11 +605,9 @@ export class DashboardPage implements OnInit {
     }
   }
 
-
   // =====================================================
   // LOGOUT & NAVEGAÇÃO
   // =====================================================
-
   logout() {
     this.mostrarLogout = true;
   }
@@ -417,8 +638,15 @@ export class DashboardPage implements OnInit {
     this.router.navigate(['/pagamentos']);
   }
 
+  abrirBoletos() {
+    this.router.navigate(['/boletos']);
+  }
+
+  abrirContasFixas() {
+    this.router.navigate(['/contas-fixas']);
+  }
+
   abrirDicas() {
     this.router.navigate(['/dicas']);
   }
-
 }

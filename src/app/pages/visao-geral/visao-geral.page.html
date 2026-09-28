@@ -3,49 +3,122 @@
     <div class="topo-left">
       <ion-icon name="arrow-back-outline" class="btn-voltar" (click)="voltar()"></ion-icon>
       <div class="topo-logo">
-        <img src="assets/icon.png" alt="OrganizAí">
         <span>Visão Geral</span>
       </div>
     </div>
   </div>
 
+  <!-- ============================================= -->
+  <!-- CARD DE RENDA MENSAL                          -->
+  <!-- ============================================= -->
   <div class="salario-card">
     <div class="salario-header">
       <div class="sal-icon"><ion-icon name="wallet-outline"></ion-icon></div>
-      <h3>Renda Mensal</h3>
+      <div class="salario-header-text">
+        <span class="salario-header-tag">Orçamento</span>
+        <h3>Renda Mensal</h3>
+      </div>
     </div>
     
+    <!-- MODO EDIÇÃO DO SALÁRIO (RESPONSIVO E NUNCA CORTA NA TELA) -->
     <div class="salario-input-area" *ngIf="editandoSalario">
-      <p class="salario-hint">Informe sua renda para podermos analisar seus gastos e sugerir estratégias.</p>
-      <div class="input-group">
-        <span class="currency">R$</span>
-        <input type="number" [(ngModel)]="salarioInput" placeholder="0.00">
-        <button class="btn btn--primary" (click)="salvarSalario()">Salvar</button>
+      <p class="salario-hint">Informe sua renda mensal líquida para calcular seus limites:</p>
+      
+      <div class="salario-input-campo">
+        <span class="currency-prefix">R$</span>
+        <input 
+          type="number" 
+          [(ngModel)]="salarioInput" 
+          placeholder="0,00"
+          (keyup.enter)="salvarSalario()"
+          inputmode="decimal">
+      </div>
+
+      <div class="salario-botoes">
+        <button class="btn-salario btn-salario--cancelar" *ngIf="rendaMensal > 0" (click)="editandoSalario = false" type="button">
+          Cancelar
+        </button>
+        <button class="btn-salario btn-salario--salvar" (click)="salvarSalario()" type="button">
+          <ion-icon name="checkmark-outline"></ion-icon>
+          <span>Confirmar Renda</span>
+        </button>
       </div>
     </div>
 
+    <!-- MODO VISUALIZAÇÃO COM BOTÃO CIRCULAR DE LÁPIS/EDITAR -->
     <div class="salario-display" *ngIf="!editandoSalario">
-      <h2>{{ fmt(rendaMensal) }}</h2>
-      <button class="btn-edit" (click)="editandoSalario = true">Editar</button>
+      <div class="salario-display__info">
+        <span class="salario-display__label">Valor Cadastrado</span>
+        <h2>{{ fmt(rendaMensal) }}</h2>
+      </div>
+      <button class="btn-edit-circular" (click)="editandoSalario = true" title="Editar renda mensal" type="button">
+        <ion-icon name="create-outline"></ion-icon>
+      </button>
     </div>
   </div>
 
   <div class="resumo-container" *ngIf="!editandoSalario && rendaMensal > 0">
     
-    <!-- GRÁFICO COMPROMETIMENTO -->
-    <div class="grafico-resumo">
-      <div class="grafico-bar">
-        <div class="grafico-fill" [style.width]="percentualComprometido + '%'"
-             [class.danger]="percentualComprometido > 85"
-             [class.warning]="percentualComprometido > 60 && percentualComprometido <= 85"
-             [class.success]="percentualComprometido <= 60"></div>
+    <!-- ============================================= -->
+    <!-- GRÁFICO DONUT FINANCEIRO OBJETIVO             -->
+    <!-- ============================================= -->
+    <div class="grafico-card">
+      <div class="grafico-card__header">
+        <ion-icon name="pie-chart-outline"></ion-icon>
+        <h4>Distribuição do seu Dinheiro</h4>
       </div>
-      <div class="grafico-labels">
-        <span>{{ percentualComprometido }}% Comprometido</span>
-        <span>{{ fmt(saldoRestante) }} Livre</span>
+
+      <div class="donut-chart-wrap">
+        <div class="donut-chart" [style.background]="donutGradient">
+          <div class="donut-center">
+            <span class="donut-center__label">Saldo Livre</span>
+            <strong class="donut-center__valor" [class.negativo]="saldoRestante < 0">
+              {{ fmt(saldoRestante) }}
+            </strong>
+            <span class="donut-center__sub" [class.negativo]="saldoRestante < 0">
+              {{ percentualLivre }}% livre
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEGENDA OBJETIVA E CLARA -->
+      <div class="grafico-legenda">
+        <div class="legenda-item">
+          <span class="legenda-dot dot--livre"></span>
+          <div class="legenda-info">
+            <span class="legenda-nome">Saldo Livre</span>
+            <strong>{{ fmt(saldoRestante) }} ({{ percentualLivre }}%)</strong>
+          </div>
+        </div>
+
+        <div class="legenda-item">
+          <span class="legenda-dot dot--contas"></span>
+          <div class="legenda-info">
+            <span class="legenda-nome">Contas Fixas</span>
+            <strong>{{ fmt(totalContasFixas) }} ({{ percentualContasFixas }}%)</strong>
+          </div>
+        </div>
+
+        <div class="legenda-item">
+          <span class="legenda-dot dot--boletos"></span>
+          <div class="legenda-info">
+            <span class="legenda-nome">Boletos</span>
+            <strong>{{ fmt(totalBoletosPendentes) }} ({{ percentualBoletos }}%)</strong>
+          </div>
+        </div>
+
+        <div class="legenda-item">
+          <span class="legenda-dot dot--assin"></span>
+          <div class="legenda-info">
+            <span class="legenda-nome">Assinaturas</span>
+            <strong>{{ fmt(totalAssinaturas) }} ({{ percentualAssinaturas }}%)</strong>
+          </div>
+        </div>
       </div>
     </div>
 
+    <!-- ANÁLISE INTELIGENTE -->
     <div class="dicas-box" [ngClass]="percentualComprometido > 90 ? 'dica-danger' : (percentualComprometido > 60 ? 'dica-warning' : 'dica-success')">
       <ion-icon name="bulb-outline"></ion-icon>
       <div class="dica-content">
@@ -89,9 +162,9 @@
 
     <hr class="divider">
 
-    <h3 class="section-title">Ferramentas & Operações Rápidas</h3>
+    <h3 class="section-title">Estratégias Financeiras</h3>
 
-    <!-- REGRA 50 30 20 -->
+    <!-- REGRA 50 30 20 (SEM OS BOTÕES REMOVIDOS) -->
     <div class="operacao-card op-regra">
       <div class="op-header">
         <ion-icon name="pie-chart-outline"></ion-icon>

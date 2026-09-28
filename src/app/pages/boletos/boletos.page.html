@@ -3,7 +3,6 @@
     <div class="topo-left">
       <ion-icon name="arrow-back-outline" class="btn-voltar" (click)="voltar()"></ion-icon>
       <div class="topo-logo">
-        <img src="assets/icon.png" alt="OrganizAí">
         <span>Boletos</span>
       </div>
     </div>
@@ -24,37 +23,99 @@
       <span>Pagos</span>
       <strong>{{ fmtMoeda(totalPago) }}</strong>
     </div>
-    <div class="res-sep"></div>
-    <div class="res-item res-item--danger" *ngIf="cnt['vencido'] > 0">
-      <span>⚠️ Vencidos</span>
-      <strong>{{ cnt['vencido'] }}</strong>
+    <div class="res-sep" *ngIf="gruposParcelamento.length > 0"></div>
+    <div class="res-item res-item--purple" *ngIf="gruposParcelamento.length > 0">
+      <span>Parcelas</span>
+      <strong>{{ gruposParcelamento.length }}</strong>
     </div>
   </div>
 
   <!-- FILTROS -->
   <div class="filtros-scroll">
     <div class="filtros">
-      <button class="filtro-btn" [class.ativo]="filtro==='todos'"    (click)="setFiltro('todos')">Todos <span class="fbadge">{{ cnt['todos'] }}</span></button>
-      <button class="filtro-btn filtro-btn--v" [class.ativo]="filtro==='vencido'"  (click)="setFiltro('vencido')">Vencidos <span class="fbadge">{{ cnt['vencido'] }}</span></button>
-      <button class="filtro-btn filtro-btn--p" [class.ativo]="filtro==='pendente'" (click)="setFiltro('pendente')">Pendentes <span class="fbadge">{{ cnt['pendente'] }}</span></button>
-      <button class="filtro-btn filtro-btn--ok" [class.ativo]="filtro==='pago'"   (click)="setFiltro('pago')">Pagos <span class="fbadge">{{ cnt['pago'] }}</span></button>
+      <button class="filtro-btn" [class.ativo]="filtro==='todos'" (click)="setFiltro('todos')">
+        Todos <span class="fbadge">{{ cnt['todos'] }}</span>
+      </button>
+      <button class="filtro-btn filtro-btn--parc" [class.ativo]="filtro==='parcelado'" (click)="setFiltro('parcelado')">
+        <ion-icon name="layers-outline"></ion-icon>
+        Parcelas <span class="fbadge">{{ cnt['parcelado'] }}</span>
+      </button>
+      <button class="filtro-btn filtro-btn--v" [class.ativo]="filtro==='vencido'" (click)="setFiltro('vencido')">
+        Vencidos <span class="fbadge">{{ cnt['vencido'] }}</span>
+      </button>
+      <button class="filtro-btn filtro-btn--p" [class.ativo]="filtro==='pendente'" (click)="setFiltro('pendente')">
+        Pendentes <span class="fbadge">{{ cnt['pendente'] }}</span>
+      </button>
+      <button class="filtro-btn filtro-btn--ok" [class.ativo]="filtro==='pago'" (click)="setFiltro('pago')">
+        Pagos <span class="fbadge">{{ cnt['pago'] }}</span>
+      </button>
     </div>
   </div>
 
-  <!-- EMPTY -->
+  <!-- EMPTY STATE -->
   <div class="empty-state" *ngIf="filtrados.length === 0">
     <ion-icon name="document-text-outline" class="empty-icon"></ion-icon>
-    <h3>Nenhum boleto</h3>
-    <p>Adicione boletos e pagamentos avulsos para controlar seus vencimentos.</p>
+    <h3>{{ filtro === 'parcelado' ? 'Nenhuma parcela ativa' : 'Nenhum boleto encontrado' }}</h3>
+    <p>
+      {{ filtro === 'parcelado' 
+        ? 'Cadastre compras parceladas para acompanhar e diminuir parcelas na mesma caixa.' 
+        : 'Adicione boletos ou parcelas para controlar seus vencimentos.' }}
+    </p>
     <button class="btn btn--primary btn--md" (click)="abrirModal()">
       <ion-icon name="add-outline"></ion-icon>
-      Adicionar Boleto
+      Adicionar Pagamento
     </button>
   </div>
 
-  <!-- LISTA -->
-  <div class="lista" *ngIf="filtrados.length > 0">
-    <div class="boleto-card" *ngFor="let b of filtrados"
+  <!-- SEÇÃO DE PARCELAS AGRUPADAS NA MESMA CAIXA COM FORMA DE DIMINUIÇÃO (QUANDO NO FILTRO PARCELAS OU TODOS) -->
+  <div class="parcelas-grid-caixas" *ngIf="(filtro === 'parcelado' || filtro === 'todos') && gruposParcelamento.length > 0">
+    <div class="parcela-caixa" *ngFor="let g of gruposParcelamento">
+      <div class="p-caixa-header">
+        <div class="p-caixa-title">
+          <h4>{{ g.nome }}</h4>
+          <span class="juros-tag" [class.com-juros]="g.temJuros">
+            {{ g.temJuros ? (g.taxaJuros ? 'Com juros (' + g.taxaJuros + '%)' : 'Com juros') : 'Sem juros' }}
+          </span>
+        </div>
+        <button class="btn-caixa-del" (click)="iniciarExcluirGrupo(g, $event)" title="Excluir parcelas">
+          <ion-icon name="trash-outline"></ion-icon>
+        </button>
+      </div>
+
+      <div class="p-caixa-mid">
+        <div class="p-caixa-valores">
+          <span class="p-caixa-qtd">{{ g.totalParcelas }}x de {{ fmtMoeda(g.valorParcela) }}</span>
+          <span class="p-caixa-restante">
+            Resta: <strong>{{ fmtMoeda(g.valorRestante) }}</strong>
+          </span>
+        </div>
+
+        <div class="p-barra-bg">
+          <div class="p-barra-fill" [style.width.%]="g.percentualPago"></div>
+        </div>
+
+        <div class="p-caixa-status-row">
+          <span class="p-pagas-txt">{{ g.parcelasPagas }}/{{ g.totalParcelas }} pagas ({{ g.percentualPago }}%)</span>
+          <span class="p-concluido-tag" *ngIf="g.concluido">Quitado ✓</span>
+        </div>
+      </div>
+
+      <!-- FORMA DE DIMINUIÇÃO NA MESMA CAIXA -->
+      <div class="p-caixa-acoes" *ngIf="!g.concluido">
+        <button class="btn-diminuir" (click)="diminuirParcela(g, $event)">
+          <ion-icon name="remove-circle-outline"></ion-icon>
+          <span>Diminuir 1 parcela (abater)</span>
+        </button>
+        <button class="btn-reverter" *ngIf="g.parcelasPagas > 0" (click)="reverterParcela(g, $event)" title="Desfazer última parcela paga">
+          <ion-icon name="arrow-undo-outline"></ion-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LISTA DE BOLETOS AVULSOS (OU FILTRADOS) -->
+  <div class="lista" *ngIf="filtrados.length > 0 && filtro !== 'parcelado'">
+    <div class="boleto-card" *ngFor="let b of (filtro === 'todos' ? boletosAvulsos : filtrados)"
          [class.pago]="b.status==='pago'"
          [class.vencido]="b.status==='vencido'">
       <div class="boleto-main" (click)="togglePago(b)">
@@ -64,7 +125,13 @@
                     [class.icon-vencido]="b.status==='vencido'"></ion-icon>
         </div>
         <div class="boleto-info">
-          <h4>{{ b.descricao }}</h4>
+          <div class="info-topo-row">
+            <h4>{{ b.descricao }}</h4>
+            <span class="badge-parcela" *ngIf="b.parcelado">
+              <ion-icon name="layers-outline"></ion-icon>
+              {{ b.parcelaAtual }}/{{ b.totalParcelas }}
+            </span>
+          </div>
           <div class="boleto-meta">
             <ion-icon name="calendar-outline"></ion-icon>
             <span class="venc-txt"
@@ -73,46 +140,145 @@
               [class.txt-pago]="b.status==='pago'">
               {{ b.status === 'pago' ? 'Pago em ' + fmtData(b.vencimento) : (getTextoVenc(b) + ' (' + fmtData(b.vencimento) + ')') }}
             </span>
+            <span class="banco-tag" *ngIf="b.banco">• {{ b.banco }}</span>
           </div>
         </div>
         <div class="boleto-valor-area">
           <strong class="boleto-valor" [class.valor-pago]="b.status==='pago'">{{ fmtMoeda(b.valor) }}</strong>
         </div>
       </div>
-      <button class="btn-del" (click)="iniciarExcluir(b.id, $event)">
+      <button class="btn-del" (click)="iniciarExcluir(b, $event)" title="Excluir">
         <ion-icon name="trash-outline"></ion-icon>
       </button>
     </div>
   </div>
   <div style="height:48px"></div>
 
-  <!-- MODAL NOVO BOLETO -->
+  <!-- MODAL NOVO BOLETO OU PARCELAMENTO -->
   <div class="overlay" *ngIf="mostrarModal" (click)="fecharModal()">
     <div class="bottom-sheet" (click)="$event.stopPropagation()">
       <div class="bottom-sheet__handle"></div>
       <div class="bottom-sheet__header">
-        <h2>Novo Boleto</h2>
+        <h2>{{ novaForm.ehParcelado ? 'Nova Compra Parcelada' : 'Novo Boleto' }}</h2>
         <button (click)="fecharModal()"><ion-icon name="close-outline"></ion-icon></button>
       </div>
+
       <div class="bottom-sheet__body">
-        <div class="field"><label>Descrição *</label><input type="text" placeholder="Ex: IPTU, Mensalidade..." [(ngModel)]="novaForm.descricao" maxlength="60"></div>
-        <div class="field"><label>Valor (R$) *</label><input type="number" placeholder="0,00" [(ngModel)]="novaForm.valor" min="0.01" step="0.01"></div>
-        <div class="field"><label>Vencimento *</label><input type="date" [(ngModel)]="novaForm.vencimento"></div>
+        <div class="field">
+          <label>Descrição do Pagamento *</label>
+          <input type="text" placeholder="Ex: Notebook Dell, Celular, IPTU..." [(ngModel)]="novaForm.descricao" maxlength="60">
+        </div>
+
+        <!-- TOGGLE PARCELAMENTO -->
+        <div class="toggle-parcelamento-box" (click)="novaForm.ehParcelado = !novaForm.ehParcelado">
+          <div class="toggle-p-info">
+            <ion-icon name="layers-outline"></ion-icon>
+            <div>
+              <strong>Pagamento Parcelado?</strong>
+              <small>Gera todas as parcelas mensais automaticamente</small>
+            </div>
+          </div>
+          <input type="checkbox" [(ngModel)]="novaForm.ehParcelado" (click)="$event.stopPropagation()">
+        </div>
+
+        <!-- CAMPOS EXTRAS QUANDO PARCELADO -->
+        <div class="parcelado-campos" *ngIf="novaForm.ehParcelado">
+          <div class="field">
+            <label>Tipo de Valor Digitado</label>
+            <div class="tipo-valor-toggle">
+              <button type="button" 
+                      class="btn-tipo" 
+                      [class.ativo]="novaForm.tipoValor === 'total'"
+                      (click)="novaForm.tipoValor = 'total'">
+                Valor Total da Compra
+              </button>
+              <button type="button" 
+                      class="btn-tipo" 
+                      [class.ativo]="novaForm.tipoValor === 'parcela'"
+                      (click)="novaForm.tipoValor = 'parcela'">
+                Valor por Parcela
+              </button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Condição de Juros</label>
+            <div class="tipo-valor-toggle">
+              <button type="button" 
+                      class="btn-tipo" 
+                      [class.ativo]="!novaForm.temJuros"
+                      (click)="novaForm.temJuros = false">
+                Sem Juros
+              </button>
+              <button type="button" 
+                      class="btn-tipo" 
+                      [class.ativo]="novaForm.temJuros"
+                      (click)="novaForm.temJuros = true">
+                Com Juros
+              </button>
+            </div>
+          </div>
+
+          <div class="field" *ngIf="novaForm.temJuros">
+            <label>Acréscimo de Juros (%)</label>
+            <input type="number" placeholder="Ex: 5" [(ngModel)]="novaForm.taxaJuros" min="0" step="0.1">
+          </div>
+
+          <div class="field">
+            <label>Quantidade de Parcelas</label>
+            <select [(ngModel)]="novaForm.totalParcelas">
+              <option *ngFor="let opt of parcelasOpcoes" [value]="opt">{{ opt }}x parcelas</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>{{ novaForm.ehParcelado && novaForm.tipoValor === 'total' ? 'Valor Total da Compra (R$) *' : 'Valor (R$) *' }}</label>
+          <input type="number" placeholder="0,00" [(ngModel)]="novaForm.valor" min="0.01" step="0.01">
+        </div>
+
+        <!-- PREVIEW DO CÁLCULO DAS PARCELAS -->
+        <div class="calculo-preview" *ngIf="novaForm.ehParcelado && novaForm.valor && novaForm.valor > 0">
+          <ion-icon name="information-circle-outline"></ion-icon>
+          <div>
+            <strong>{{ novaForm.totalParcelas }}x de {{ fmtMoeda(valorParcelaCalculado) }}</strong>
+            <span>Total: {{ fmtMoeda(valorTotalCalculado) }} · {{ novaForm.temJuros ? (novaForm.taxaJuros ? 'Com juros (' + novaForm.taxaJuros + '%)' : 'Com juros') : 'Sem juros' }}</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>{{ novaForm.ehParcelado ? '1º Vencimento *' : 'Vencimento *' }}</label>
+          <input type="date" [(ngModel)]="novaForm.vencimento">
+        </div>
+
+        <div class="field">
+          <label>Instituição / Banco (Opcional)</label>
+          <input type="text" placeholder="Ex: Nubank, Itaú, Magazine Luiza..." [(ngModel)]="novaForm.banco" maxlength="40">
+        </div>
+
         <p class="form-error" *ngIf="erroForm">{{ erroForm }}</p>
       </div>
+
       <div class="bottom-sheet__footer">
         <button class="btn btn--secondary btn--md btn--full" (click)="fecharModal()">Cancelar</button>
-        <button class="btn btn--primary btn--md btn--full" (click)="salvar()"><ion-icon name="add-outline"></ion-icon>Adicionar</button>
+        <button class="btn btn--primary btn--md btn--full" (click)="salvar()">
+          <ion-icon name="add-outline"></ion-icon>
+          {{ novaForm.ehParcelado ? 'Cadastrar Parcelas' : 'Adicionar Boleto' }}
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- CONFIRMAÇÃO -->
+  <!-- CONFIRMAÇÃO EXCLUSÃO (IGUAL ASSINATURAS E CONTAS FIXAS) -->
   <div class="modal-center" *ngIf="mostrarConfirmacao" (click)="cancelarExclusao()">
     <div class="modal-box" (click)="$event.stopPropagation()">
       <div class="modal-icon">🗑️</div>
-      <h3>Excluir Boleto?</h3>
-      <p>Esta ação não pode ser desfeita.</p>
+      <h3>{{ grupoParaExcluir ? 'Excluir Parcelas?' : 'Excluir Boleto?' }}</h3>
+      <p>
+        Tem certeza que deseja excluir 
+        <strong>{{ grupoParaExcluir ? grupoParaExcluir.nome : boletoParaExcluir?.descricao }}</strong>? 
+        Esta ação não pode ser desfeita.
+      </p>
       <div class="modal-actions">
         <button class="btn btn--secondary btn--md btn--full" (click)="cancelarExclusao()">Cancelar</button>
         <button class="btn btn--danger btn--md btn--full" (click)="confirmarExclusao()">Excluir</button>
