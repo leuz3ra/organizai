@@ -1,19 +1,22 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './guards/auth.guard';
+import { authGuard, noAuthGuard, initialGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'login',
     pathMatch: 'full',
+    canActivate: [initialGuard],
+    children: []
   },
   {
     path: 'login',
     loadComponent: () => import('./pages/login/login.page').then(m => m.LoginPage),
+    canActivate: [noAuthGuard],
   },
   {
     path: 'cadastro',
     loadComponent: () => import('./pages/cadastro/cadastro.page').then(m => m.CadastroPage),
+    canActivate: [noAuthGuard],
   },
   {
     path: 'dashboard',

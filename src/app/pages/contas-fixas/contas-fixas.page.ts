@@ -12,6 +12,7 @@ import {
   busOutline, medkitOutline, appsOutline, removeCircleOutline
 } from 'ionicons/icons';
 import { UserStorageService } from '../../services/user-storage.service';
+import { formatBRL } from '../../utils/formatters';
 
 export type CatCF = 'moradia' | 'agua' | 'energia' | 'internet' | 'transporte' | 'saude' | 'mercado' | 'combustivel' | 'outros';
 export type StatusCF = 'pago' | 'pendente';
@@ -145,7 +146,7 @@ export class ContasFixasPage implements OnInit {
     this.salvarLS(); this.fecharModal();
   }
 
-  fmt(v: number): string { return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+  fmt(v: number): string { return formatBRL(v); }
   private id(): string { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
   voltar() { this.router.navigate(['/pagamentos']); }
 }

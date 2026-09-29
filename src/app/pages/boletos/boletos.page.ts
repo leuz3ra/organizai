@@ -12,6 +12,7 @@ import {
   removeOutline, removeCircleOutline, addCircleOutline
 } from 'ionicons/icons';
 import { UserStorageService } from '../../services/user-storage.service';
+import { formatBRL } from '../../utils/formatters';
 
 export type StatusBoleto = 'pendente' | 'pago' | 'vencido';
 export type FiltroBoleto = 'todos' | StatusBoleto | 'parcelado';
@@ -430,7 +431,7 @@ export class BoletosPage implements OnInit {
   }
 
   fmtMoeda(v: number): string {
-    return (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    return formatBRL(v);
   }
 
   fmtData(d: string): string {

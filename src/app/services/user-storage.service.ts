@@ -28,13 +28,18 @@ export class UserStorageService {
 
   private resolveKey(key: string): string {
     if (!this.currentUserId) {
-      // Fallback para usuário atual do Supabase no localStorage se disponível
       try {
-        const authData = localStorage.getItem('sb-dkftcjsofgpllrmswpmw-auth-token');
-        if (authData) {
-          const parsed = JSON.parse(authData);
-          if (parsed?.user?.id) {
-            this.currentUserId = parsed.user.id;
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) {
+            const raw = localStorage.getItem(k);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (parsed?.user?.id) {
+                this.currentUserId = parsed.user.id;
+                break;
+              }
+            }
           }
         }
       } catch {}

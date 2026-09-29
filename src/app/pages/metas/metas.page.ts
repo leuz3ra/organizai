@@ -23,6 +23,7 @@ import {
 } from 'ionicons/icons';
 
 import { MetasService } from '../../services/metas.service';
+import { formatBRL } from '../../utils/formatters';
 import { Meta, MetaPagamento } from '../../models/meta.model';
 
 interface MetaComPagamentos extends Meta {
@@ -418,10 +419,7 @@ export class MetasPage implements OnInit {
 
   formatarMoeda(valor: any): string {
     const n = parseNum(valor);
-    return n.toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    });
+    return formatBRL(n);
   }
 
 }

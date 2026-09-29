@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -35,7 +35,7 @@ import { SupabaseService } from '../../services/supabase.service';
     IonIcon
   ]
 })
-export class LoginPage {
+export class LoginPage implements OnInit {
 
   email = '';
   senha = '';
@@ -59,6 +59,25 @@ export class LoginPage {
       alertCircleOutline,
       sparklesOutline
     });
+  }
+
+  async ngOnInit() {
+    await this.verificarSessao();
+  }
+
+  async ionViewWillEnter() {
+    await this.verificarSessao();
+  }
+
+  private async verificarSessao() {
+    try {
+      const user = await this.supabaseService.usuarioAtual();
+      if (user) {
+        this.router.navigate(['/dashboard'], { replaceUrl: true });
+      }
+    } catch (e) {
+      console.warn('Erro ao verificar sessão ativa:', e);
+    }
   }
 
   toggleMostrarSenha() {

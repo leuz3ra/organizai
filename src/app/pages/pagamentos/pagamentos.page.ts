@@ -16,6 +16,7 @@ import {
   chevronForwardOutline
 } from 'ionicons/icons';
 import { UserStorageService } from '../../services/user-storage.service';
+import { formatBRL } from '../../utils/formatters';
 
 @Component({
   selector: 'app-pagamentos',
@@ -135,7 +136,7 @@ export class PagamentosPage implements OnInit {
   }
 
   formatarMoeda(valor: number): string {
-    return (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    return formatBRL(valor);
   }
 
   irParaAssinaturas()   { this.router.navigate(['/assinaturas']); }

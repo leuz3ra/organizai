@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { formatBRL } from '../utils/formatters';
 
 import {
   IonContent,
@@ -424,7 +425,7 @@ export class DashboardPage implements OnInit {
     if (this.ocultarValores) {
       return 'R$ •••••';
     }
-    return (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    return formatBRL(valor);
   }
 
   // =====================================================

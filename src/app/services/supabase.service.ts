@@ -12,13 +12,33 @@ export class SupabaseService {
   constructor() {
     this.supabase = createClient(
       environment.supabaseUrl,
-      environment.supabaseKey
+      environment.supabaseKey,
+      {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: false,
+          storage: localStorage
+        }
+      }
     );
   }
 
   // ==============================
-  // AUTENTICAÇÃO & PERFIL
+  // SESSÃO & PERSISTÊNCIA
   // ==============================
+
+  async obterSessao() {
+    try {
+      const { data, error } = await this.supabase.auth.getSession();
+      if (error || !data?.session) {
+        return null;
+      }
+      return data.session;
+    } catch {
+      return null;
+    }
+  }
 
   async cadastrar(
     email: string,
@@ -83,14 +103,19 @@ export class SupabaseService {
   }
 
   async usuarioAtual() {
-    const { data, error } =
-      await this.supabase.auth.getUser();
-
-    if (error) {
+    try {
+      const sessao = await this.obterSessao();
+      if (sessao?.user) {
+        return sessao.user;
+      }
+      const { data, error } = await this.supabase.auth.getUser();
+      if (error || !data?.user) {
+        return null;
+      }
+      return data.user;
+    } catch {
       return null;
     }
-
-    return data.user;
   }
 
   async obterNomePerfil(userId: string): Promise<string | null> {

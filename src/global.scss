@@ -156,10 +156,20 @@ body, ion-app {
   -moz-osx-font-smoothing: grayscale;
   background: var(--c-bg);
   color: var(--c-text-primary);
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: pan-y;
+}
+
+input, textarea, select {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 ion-content {
   --background: var(--c-bg);
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
 
 /* Remove setas do input number */
@@ -232,13 +242,11 @@ input[type="number"] {
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15,17,23,.35);
+  background: rgba(15, 17, 23, 0.65);
   display: flex;
   align-items: flex-end;
   justify-content: center;
   z-index: 500;
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
 }
 
 /* Bottom Sheet partilhado */
@@ -307,13 +315,11 @@ input[type="number"] {
 .modal-center {
   position: fixed;
   inset: 0;
-  background: rgba(15,17,23,.35);
+  background: rgba(15,17,23,.65);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 500;
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
   padding: 20px;
 
   .modal-box {

@@ -21,6 +21,7 @@ import {
 } from 'ionicons/icons';
 import { UserStorageService } from '../../services/user-storage.service';
 import { MetasService } from '../../services/metas.service';
+import { formatBRL } from '../../utils/formatters';
 
 interface Vencimento {
   nome: string;
@@ -261,7 +262,7 @@ export class VisaoGeralPage implements OnInit {
   }
 
   fmt(v: number): string {
-    return (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    return formatBRL(v);
   }
 
   voltar() {

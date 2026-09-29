@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -43,7 +43,7 @@ export interface CriterioSenha {
     IonIcon
   ]
 })
-export class CadastroPage {
+export class CadastroPage implements OnInit {
 
   nome = '';
   email = '';
@@ -74,6 +74,23 @@ export class CadastroPage {
       sparklesOutline,
       alertCircleOutline
     });
+  }
+
+  async ngOnInit() {
+    await this.verificarSessao();
+  }
+
+  async ionViewWillEnter() {
+    await this.verificarSessao();
+  }
+
+  private async verificarSessao() {
+    try {
+      const user = await this.supabaseService.usuarioAtual();
+      if (user) {
+        this.router.navigate(['/dashboard'], { replaceUrl: true });
+      }
+    } catch {}
   }
 
   // =====================================================

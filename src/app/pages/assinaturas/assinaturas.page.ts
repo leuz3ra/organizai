@@ -11,6 +11,7 @@ import {
   playOutline, refreshOutline, searchOutline, banOutline
 } from 'ionicons/icons';
 import { UserStorageService } from '../../services/user-storage.service';
+import { formatBRL } from '../../utils/formatters';
 
 export type CicloAssinatura = 'mensal' | 'anual' | 'semanal';
 export type StatusAssinatura = 'ativo' | 'pausado' | 'cancelado';
@@ -303,7 +304,7 @@ export class AssinaturasPage implements OnInit {
   onLogoError(a: Assinatura) { a.logoUrl = undefined; }
 
   fmt(v: number): string {
-    return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    return formatBRL(v);
   }
 
   private id(): string {
