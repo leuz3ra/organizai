@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonContent, IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
@@ -35,6 +35,7 @@ interface Vencimento {
   standalone: true,
   templateUrl: './visao-geral.page.html',
   styleUrls: ['./visao-geral.page.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, IonContent, IonIcon]
 })
 export class VisaoGeralPage implements OnInit {
@@ -52,7 +53,8 @@ export class VisaoGeralPage implements OnInit {
   constructor(
     private router: Router,
     private userStorage: UserStorageService,
-    private metasService: MetasService
+    private metasService: MetasService,
+    private cdr: ChangeDetectorRef
   ) {
     addIcons({
       arrowBackOutline,
@@ -73,10 +75,13 @@ export class VisaoGeralPage implements OnInit {
 
   async ngOnInit() {
     await this.carregarDados();
+    this.cdr.markForCheck();
   }
 
   async ionViewWillEnter() {
+    // Recarrega sempre que entrar na tela (saldo pode ter mudado)
     await this.carregarDados();
+    this.cdr.markForCheck();
   }
 
   async carregarDados() {
@@ -190,6 +195,7 @@ export class VisaoGeralPage implements OnInit {
       this.rendaMensal = val;
       this.userStorage.setItem('renda_mensal', val.toString());
       this.editandoSalario = false;
+      this.cdr.markForCheck();
     }
   }
 

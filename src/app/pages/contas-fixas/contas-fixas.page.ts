@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonContent, IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
@@ -32,6 +32,7 @@ export interface ContaFixa {
   standalone: true,
   templateUrl: './contas-fixas.page.html',
   styleUrls: ['./contas-fixas.page.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, IonContent, IonIcon]
 })
 export class ContasFixasPage implements OnInit {
@@ -58,7 +59,8 @@ export class ContasFixasPage implements OnInit {
 
   constructor(
     private router: Router,
-    private userStorage: UserStorageService
+    private userStorage: UserStorageService,
+    private cdr: ChangeDetectorRef
   ) {
     addIcons({ arrowBackOutline, addOutline, closeOutline, trashOutline,
       homeOutline, checkmarkCircleOutline, ellipseOutline,
@@ -70,11 +72,13 @@ export class ContasFixasPage implements OnInit {
   async ngOnInit() {
     await this.userStorage.carregarUsuarioAtual();
     this.carregar();
+    this.cdr.markForCheck();
   }
 
   async ionViewWillEnter() {
-    await this.userStorage.carregarUsuarioAtual();
+    // userId já disponível — apenas recarrega dados
     this.carregar();
+    this.cdr.markForCheck();
   }
 
   carregar() {
@@ -84,7 +88,7 @@ export class ContasFixasPage implements OnInit {
     } catch { this.contas = this.dadosIniciais(); }
   }
 
-  salvarLS() { this.userStorage.setItem('contas_fixas', JSON.stringify(this.contas)); }
+  salvarLS() { this.userStorage.setItem('contas_fixas', JSON.stringify(this.contas)); this.cdr.markForCheck(); }
 
   dadosIniciais(): ContaFixa[] {
     return [];

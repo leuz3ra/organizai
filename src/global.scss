@@ -16,7 +16,7 @@
 /* ============================================================
    GOOGLE FONTS — Inter
    ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&display=swap&font-display=swap');
 
 /* ============================================================
    DESIGN TOKENS
@@ -170,6 +170,8 @@ ion-content {
   --background: var(--c-bg);
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
+  /* Aceleração por hardware para rolagem fluida */
+  will-change: scroll-position;
 }
 
 /* Remove setas do input number */
@@ -247,6 +249,9 @@ input[type="number"] {
   align-items: flex-end;
   justify-content: center;
   z-index: 500;
+  /* Força layer de composição da GPU para evitar jank ao abrir/fechar */
+  will-change: opacity;
+  contain: layout style;
 }
 
 /* Bottom Sheet partilhado */
@@ -257,6 +262,12 @@ input[type="number"] {
   max-width: 600px;
   max-height: 92vh;
   overflow-y: auto;
+  /* Aceleração por hardware para transição do sheet */
+  will-change: transform;
+  transform: translateZ(0);
+  /* Melhora performance de scroll interno */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 
   &__handle {
     width: 36px;
@@ -475,6 +486,9 @@ input[type="number"] {
   font-weight: 700;
   cursor: pointer;
   transition: opacity var(--t-fast), transform var(--t-fast);
+  /* Evita atrasos de toque em mobile */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 
   &:active { opacity: 0.85; transform: scale(0.97); }
   &:disabled { opacity: 0.5; cursor: default; transform: none; }

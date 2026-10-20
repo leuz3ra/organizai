@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonContent, IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
@@ -23,13 +23,23 @@ import { formatBRL } from '../../utils/formatters';
   standalone: true,
   templateUrl: './pagamentos.page.html',
   styleUrls: ['./pagamentos.page.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, IonContent, IonIcon]
 })
 export class PagamentosPage implements OnInit {
 
+  // Propriedades calculadas e armazenadas (evita JSON.parse() a cada ciclo de detecção)
+  totalAssinaturas = 0;
+  totalBoletos = 0;
+  totalContasFixas = 0;
+  qtdParcelamentosAtivos = 0;
+  totalDividaParcelamentos = 0;
+  totalParcelasMes = 0;
+
   constructor(
     private router: Router,
-    private userStorage: UserStorageService
+    private userStorage: UserStorageService,
+    private cdr: ChangeDetectorRef
   ) {
     addIcons({
       arrowBackOutline,
@@ -46,93 +56,98 @@ export class PagamentosPage implements OnInit {
   }
 
   async ngOnInit() {
-    await this.userStorage.carregarUsuarioAtual();
+    // Inicialização mínima — dados carregados em ionViewWillEnter
   }
 
   async ionViewWillEnter() {
     await this.userStorage.carregarUsuarioAtual();
+    this.calcularTotais();
+    this.cdr.markForCheck();
   }
 
-  private get listaBoletos(): any[] {
-    try {
-      const raw = this.userStorage.getItem('boletos');
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  }
+  /**
+   * Calcula todos os totais de uma vez, lendo o localStorage apenas uma vez por tela.
+   * Antes: 5 getters faziam JSON.parse() individualmente a cada ciclo de detecção.
+   */
+  private calcularTotais(): void {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const fimDoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
 
-  get totalAssinaturas(): number {
+    // --- Assinaturas ---
     try {
       const raw = this.userStorage.getItem('assinaturas');
-      if (!raw) return 0;
-      const lista = JSON.parse(raw);
-      return lista
+      const lista = raw ? JSON.parse(raw) : [];
+      this.totalAssinaturas = lista
         .filter((a: any) => a.status === 'ativo')
         .reduce((s: number, a: any) => {
           const v = Number(a.valor) || 0;
           return s + (a.ciclo === 'anual' ? v / 12 : v);
         }, 0);
-    } catch { return 0; }
-  }
+    } catch {
+      this.totalAssinaturas = 0;
+    }
 
-  get totalBoletos(): number {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const fimDoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
+    // --- Boletos (único JSON.parse para todos os cálculos relacionados) ---
+    let boletos: any[] = [];
+    try {
+      const raw = this.userStorage.getItem('boletos');
+      boletos = raw ? JSON.parse(raw) : [];
+    } catch {
+      boletos = [];
+    }
 
-    return this.listaBoletos
-      .filter((p: any) => {
-        if (p.status === 'pago') return false;
-        if (!p.vencimento) return true;
-        const d = new Date(p.vencimento + 'T00:00:00');
-        return d <= fimDoMes;
-      })
-      .reduce((s: number, p: any) => s + (Number(p.valor) || 0), 0);
-  }
+    const boletosPendentesNoMes = boletos.filter((b: any) => {
+      if (b.status === 'pago') return false;
+      if (!b.vencimento) return true;
+      const d = new Date(b.vencimento + 'T00:00:00');
+      return d <= fimDoMes;
+    });
 
-  get totalContasFixas(): number {
+    this.totalBoletos = boletosPendentesNoMes.reduce(
+      (s: number, b: any) => s + (Number(b.valor) || 0), 0
+    );
+
+    // Parcelamentos
+    const gruposMap = new Map<string, boolean>();
+    let totalDivida = 0;
+    let totalParcelasMes = 0;
+
+    for (const b of boletos) {
+      if (b.parcelado && b.grupoId && b.status !== 'pago') {
+        gruposMap.set(b.grupoId, true);
+        totalDivida += Number(b.valor) || 0;
+
+        // Parcela no mês
+        if (!b.vencimento) {
+          totalParcelasMes += Number(b.valor) || 0;
+        } else {
+          const d = new Date(b.vencimento + 'T00:00:00');
+          if (d <= fimDoMes) {
+            totalParcelasMes += Number(b.valor) || 0;
+          }
+        }
+      }
+    }
+
+    this.qtdParcelamentosAtivos = gruposMap.size;
+    this.totalDividaParcelamentos = totalDivida;
+    this.totalParcelasMes = totalParcelasMes;
+
+    // --- Contas Fixas ---
     try {
       const raw = this.userStorage.getItem('contas_fixas');
-      if (!raw) return 0;
-      const lista = JSON.parse(raw);
-      return lista
+      const lista = raw ? JSON.parse(raw) : [];
+      this.totalContasFixas = lista
         .filter((c: any) => c.status !== 'pago')
         .reduce((s: number, c: any) => s + (Number(c.valor) || 0), 0);
-    } catch { return 0; }
+    } catch {
+      this.totalContasFixas = 0;
+    }
   }
 
   get totalGeral(): number {
     return this.totalAssinaturas + this.totalBoletos + this.totalContasFixas;
-  }
-
-  get qtdParcelamentosAtivos(): number {
-    const grupos = new Set<string>();
-    this.listaBoletos
-      .filter((b: any) => b.parcelado && b.grupoId && b.status !== 'pago')
-      .forEach((b: any) => grupos.add(b.grupoId));
-    return grupos.size;
-  }
-
-  get totalDividaParcelamentos(): number {
-    return this.listaBoletos
-      .filter((b: any) => b.parcelado && b.status !== 'pago')
-      .reduce((s: number, b: any) => s + (Number(b.valor) || 0), 0);
-  }
-
-  get totalParcelasMes(): number {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const fimDoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
-
-    return this.listaBoletos
-      .filter((b: any) => {
-        if (!b.parcelado || b.status === 'pago') return false;
-        if (!b.vencimento) return true;
-        const d = new Date(b.vencimento + 'T00:00:00');
-        return d <= fimDoMes;
-      })
-      .reduce((s: number, b: any) => s + (Number(b.valor) || 0), 0);
   }
 
   formatarMoeda(valor: number): string {

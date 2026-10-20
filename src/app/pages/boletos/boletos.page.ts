@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { IonContent, IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
@@ -56,6 +56,7 @@ export interface GrupoParcelamento {
   standalone: true,
   templateUrl: './boletos.page.html',
   styleUrls: ['./boletos.page.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, IonContent, IonIcon]
 })
 export class BoletosPage implements OnInit {
@@ -85,7 +86,8 @@ export class BoletosPage implements OnInit {
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private userStorage: UserStorageService
+    private userStorage: UserStorageService,
+    private cdr: ChangeDetectorRef
   ) {
     addIcons({
       arrowBackOutline, addOutline, closeOutline, trashOutline,
@@ -97,6 +99,7 @@ export class BoletosPage implements OnInit {
   }
 
   async ngOnInit() {
+    // Aguarda userId antes de processar queryParams e dados
     await this.userStorage.carregarUsuarioAtual();
     this.route.queryParams.subscribe(params => {
       if (params['filtro'] && ['todos', 'pendente', 'pago', 'vencido', 'parcelado'].includes(params['filtro'])) {
@@ -105,12 +108,14 @@ export class BoletosPage implements OnInit {
     });
     this.carregar();
     this.atualizarVencidos();
+    this.cdr.markForCheck();
   }
 
   async ionViewWillEnter() {
-    await this.userStorage.carregarUsuarioAtual();
+    // No ionViewWillEnter apenas recarrega dados (userId já disponível)
     this.carregar();
     this.atualizarVencidos();
+    this.cdr.markForCheck();
   }
 
   carregar() {
@@ -124,6 +129,7 @@ export class BoletosPage implements OnInit {
 
   salvarLS() {
     this.userStorage.setItem('boletos', JSON.stringify(this.boletos));
+    this.cdr.markForCheck();
   }
 
   atualizarVencidos() {
@@ -452,5 +458,6 @@ export class BoletosPage implements OnInit {
 
   setFiltro(f: FiltroBoleto) {
     this.filtro = f;
+    this.cdr.markForCheck();
   }
 }

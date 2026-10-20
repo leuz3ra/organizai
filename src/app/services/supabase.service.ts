@@ -9,6 +9,11 @@ export class SupabaseService {
 
   supabase: SupabaseClient;
 
+  // Cache de sessão em memória — evita chamadas de rede redundantes a cada troca de tela
+  private _cachedUser: any = null;
+  private _cacheTs: number = 0;
+  private readonly CACHE_TTL_MS = 30_000; // 30 segundos
+
   constructor() {
     this.supabase = createClient(
       environment.supabaseUrl,
@@ -22,6 +27,17 @@ export class SupabaseService {
         }
       }
     );
+
+    // Invalida/atualiza cache quando a sessão mudar (login/logout automático)
+    this.supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        this._cachedUser = null;
+        this._cacheTs = 0;
+      } else if (session?.user) {
+        this._cachedUser = session.user;
+        this._cacheTs = Date.now();
+      }
+    });
   }
 
   // ==============================
@@ -91,29 +107,48 @@ export class SupabaseService {
       throw error;
     }
 
+    // Popula cache imediatamente após login bem-sucedido
+    if (data?.user) {
+      this._cachedUser = data.user;
+      this._cacheTs = Date.now();
+    }
+
     return data;
   }
 
   async logout() {
+    // Invalida cache antes mesmo de chamar a API
+    this._cachedUser = null;
+    this._cacheTs = 0;
     const { error } = await this.supabase.auth.signOut();
-
     if (error) {
       throw error;
     }
   }
 
+  /**
+   * Retorna o usuário autenticado.
+   * Cache em memória (30s) evita chamadas de rede repetidas a cada troca de tela.
+   * getSession() lê do localStorage sem fazer request HTTP.
+   */
   async usuarioAtual() {
+    // Retorna do cache se ainda válido
+    if (this._cachedUser && (Date.now() - this._cacheTs) < this.CACHE_TTL_MS) {
+      return this._cachedUser;
+    }
+
     try {
-      const sessao = await this.obterSessao();
-      if (sessao?.user) {
-        return sessao.user;
+      // getSession() lê do localStorage — sem chamada de rede
+      const { data: sessionData } = await this.supabase.auth.getSession();
+      if (sessionData?.session?.user) {
+        this._cachedUser = sessionData.session.user;
+        this._cacheTs = Date.now();
+        return this._cachedUser;
       }
-      const { data, error } = await this.supabase.auth.getUser();
-      if (error || !data?.user) {
-        return null;
-      }
-      return data.user;
+      this._cachedUser = null;
+      return null;
     } catch {
+      this._cachedUser = null;
       return null;
     }
   }

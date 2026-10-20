@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 
 import {
@@ -50,6 +50,7 @@ function parseNum(val: any): number {
   standalone: true,
   templateUrl: './metas.page.html',
   styleUrls: ['./metas.page.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
     FormsModule,
@@ -59,7 +60,7 @@ function parseNum(val: any): number {
     IonSelectOption
   ]
 })
-export class MetasPage implements OnInit {
+export class MetasPage implements OnInit, OnDestroy {
 
   metas: MetaComPagamentos[] = [];
 
@@ -125,7 +126,8 @@ export class MetasPage implements OnInit {
 
   constructor(
     private router: Router,
-    private metasService: MetasService
+    private metasService: MetasService,
+    private cdr: ChangeDetectorRef
   ) {
     addIcons({
       arrowBackOutline,
@@ -144,7 +146,14 @@ export class MetasPage implements OnInit {
   }
 
   async ionViewWillEnter() {
-    await this.carregarMetas();
+    // Recarrega metas apenas se a lista está vazia (evita fetch duplo)
+    if (this.metas.length === 0) {
+      await this.carregarMetas();
+    }
+  }
+
+  ngOnDestroy() {
+    if (this._popupTimer) clearTimeout(this._popupTimer);
   }
 
 
@@ -153,7 +162,9 @@ export class MetasPage implements OnInit {
   // =====================================================
 
   async carregarMetas() {
+    if (this.carregandoMetas) return; // Evita fetches paralelos
     this.carregandoMetas = true;
+    this.cdr.markForCheck();
 
     try {
       const [metas, todosPagamentos] = await Promise.all([
@@ -178,6 +189,7 @@ export class MetasPage implements OnInit {
       console.error('Erro ao carregar metas:', err);
     } finally {
       this.carregandoMetas = false;
+      this.cdr.markForCheck();
     }
   }
 
@@ -189,13 +201,16 @@ export class MetasPage implements OnInit {
   async toggleExpandir(meta: MetaComPagamentos) {
     if (meta.expandida) {
       meta.expandida = false;
+      this.cdr.markForCheck();
       return;
     }
 
     meta.expandida = true;
+    this.cdr.markForCheck();
 
     if (meta.pagamentos.length === 0 && meta.id) {
       meta.carregando = true;
+      this.cdr.markForCheck();
       try {
         const pagamentos = await this.metasService.listarPagamentos(meta.id);
         meta.pagamentos = pagamentos;
@@ -203,6 +218,7 @@ export class MetasPage implements OnInit {
         console.error('Erro ao carregar pagamentos detalhados:', err);
       } finally {
         meta.carregando = false;
+        this.cdr.markForCheck();
       }
     }
   }
@@ -281,8 +297,12 @@ export class MetasPage implements OnInit {
       if (!eraConcluidaAntes && this.isMetaConcluida(meta)) {
         this.metaConcluidaTitulo = meta.titulo;
         this.mostrarPopupConclusao = true;
+        this.cdr.markForCheck();
         if (this._popupTimer) clearTimeout(this._popupTimer);
-        this._popupTimer = setTimeout(() => { this.mostrarPopupConclusao = false; }, 5000);
+        this._popupTimer = setTimeout(() => {
+          this.mostrarPopupConclusao = false;
+          this.cdr.markForCheck();
+        }, 5000);
       }
 
     } catch (err) {

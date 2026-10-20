@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { formatBRL } from '../utils/formatters';
@@ -67,6 +67,7 @@ export interface MoedaInfo {
   standalone: true,
   templateUrl: './dashboard.page.html',
   styleUrls: ['./dashboard.page.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
     FormsModule,
@@ -74,7 +75,9 @@ export interface MoedaInfo {
     IonIcon
   ]
 })
-export class DashboardPage implements OnInit {
+export class DashboardPage implements OnInit, OnDestroy {
+
+  private _inicializado = false;
 
   saudacao: string = 'Olá!';
   nomeUsuario: string = '';
@@ -192,7 +195,8 @@ export class DashboardPage implements OnInit {
     private router: Router,
     private supabaseService: SupabaseService,
     private userStorage: UserStorageService,
-    private metasService: MetasService
+    private metasService: MetasService,
+    private cdr: ChangeDetectorRef
   ) {
     addIcons({
       logOutOutline,
@@ -232,11 +236,10 @@ export class DashboardPage implements OnInit {
     });
   }
 
-  async ngOnInit() {
+  ngOnInit() {
+    // Inicialização mínima síncrona — dados carregados em ionViewWillEnter
     this.carregarTemaEscuro();
     this.carregarPreferenciaPrivacidade();
-    await this.carregarUsuario();
-    await this.carregarResumoFinanceiro();
   }
 
   async ionViewWillEnter() {
@@ -244,6 +247,11 @@ export class DashboardPage implements OnInit {
     this.carregarPreferenciaPrivacidade();
     await this.carregarUsuario();
     await this.carregarResumoFinanceiro();
+    this.cdr.markForCheck();
+  }
+
+  ngOnDestroy() {
+    // Cleanup ao sair da tela
   }
 
   // =====================================================
@@ -617,6 +625,7 @@ export class DashboardPage implements OnInit {
     this.mostrarLogout = false;
     try {
       await this.supabaseService.logout();
+      this.userStorage.clearUserId();
     } catch (e) {
       console.error('Erro ao deslogar:', e);
     }

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonContent, IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
@@ -48,6 +48,7 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
   standalone: true,
   templateUrl: './dicas.page.html',
   styleUrls: ['./dicas.page.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, IonContent, IonIcon]
 })
 export class DicasPage implements OnInit {
@@ -68,7 +69,8 @@ export class DicasPage implements OnInit {
 
   constructor(
     private router: Router,
-    private userStorage: UserStorageService
+    private userStorage: UserStorageService,
+    private cdr: ChangeDetectorRef
   ) {
     addIcons({
       arrowBackOutline, searchOutline, closeOutline,
@@ -81,11 +83,13 @@ export class DicasPage implements OnInit {
   async ngOnInit() {
     await this.userStorage.carregarUsuarioAtual();
     this.carregarSalvas();
+    this.cdr.markForCheck();
   }
 
   async ionViewWillEnter() {
-    await this.userStorage.carregarUsuarioAtual();
+    // userId já disponível — apenas recarrega preferências salvas
     this.carregarSalvas();
+    this.cdr.markForCheck();
   }
 
   carregarSalvas() {

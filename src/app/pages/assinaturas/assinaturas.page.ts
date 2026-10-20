@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonContent, IonIcon, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
@@ -79,6 +79,7 @@ export const SERVICOS_POPULARES: ServicoPopular[] = [
   standalone: true,
   templateUrl: './assinaturas.page.html',
   styleUrls: ['./assinaturas.page.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, IonContent, IonIcon, IonSelect, IonSelectOption]
 })
 export class AssinaturasPage implements OnInit {
@@ -129,7 +130,8 @@ export class AssinaturasPage implements OnInit {
 
   constructor(
     private router: Router,
-    private userStorage: UserStorageService
+    private userStorage: UserStorageService,
+    private cdr: ChangeDetectorRef
   ) {
     addIcons({
       arrowBackOutline, addOutline, closeOutline, trashOutline,
@@ -142,11 +144,13 @@ export class AssinaturasPage implements OnInit {
   async ngOnInit() {
     await this.userStorage.carregarUsuarioAtual();
     this.carregar();
+    this.cdr.markForCheck();
   }
 
   async ionViewWillEnter() {
-    await this.userStorage.carregarUsuarioAtual();
+    // userId já disponível — apenas recarrega dados
     this.carregar();
+    this.cdr.markForCheck();
   }
 
   // ── CRUD ───────────────────────────────────────────────────
@@ -160,6 +164,7 @@ export class AssinaturasPage implements OnInit {
 
   salvarLS() {
     this.userStorage.setItem('assinaturas', JSON.stringify(this.assinaturas));
+    this.cdr.markForCheck();
   }
 
   dadosIniciais(): Assinatura[] {
