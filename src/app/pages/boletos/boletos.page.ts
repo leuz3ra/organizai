@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { IonContent, IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
@@ -9,7 +10,7 @@ import {
   documentTextOutline, checkmarkCircleOutline, ellipseOutline,
   calendarOutline, alertCircleOutline, layersOutline, cardOutline,
   cashOutline, informationCircleOutline, chevronForwardOutline, checkmarkOutline,
-  removeOutline, removeCircleOutline, addCircleOutline
+  removeOutline, removeCircleOutline, addCircleOutline, createOutline
 } from 'ionicons/icons';
 import { UserStorageService } from '../../services/user-storage.service';
 import { formatBRL } from '../../utils/formatters';
@@ -59,7 +60,7 @@ export interface GrupoParcelamento {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, IonContent, IonIcon]
 })
-export class BoletosPage implements OnInit {
+export class BoletosPage implements OnInit, OnDestroy {
 
   boletos: Boleto[] = [];
   filtro: FiltroBoleto = 'todos';
@@ -67,7 +68,11 @@ export class BoletosPage implements OnInit {
   mostrarConfirmacao = false;
   boletoParaExcluir: Boleto | null = null;
   grupoParaExcluir: GrupoParcelamento | null = null;
+  editandoId: string | null = null;
+  editandoGrupoId: string | null = null;
   erroForm = '';
+
+  private querySub?: Subscription;
 
   novaForm = {
     descricao: '',
@@ -94,14 +99,22 @@ export class BoletosPage implements OnInit {
       documentTextOutline, checkmarkCircleOutline, ellipseOutline,
       calendarOutline, alertCircleOutline, layersOutline, cardOutline,
       cashOutline, informationCircleOutline, chevronForwardOutline, checkmarkOutline,
-      removeOutline, removeCircleOutline, addCircleOutline
+      removeOutline, removeCircleOutline, addCircleOutline, createOutline
     });
+  }
+
+  trackByBoleto(index: number, b: Boleto): string {
+    return b.id;
+  }
+
+  trackByGrupo(index: number, g: GrupoParcelamento): string {
+    return g.nome;
   }
 
   async ngOnInit() {
     // Aguarda userId antes de processar queryParams e dados
     await this.userStorage.carregarUsuarioAtual();
-    this.route.queryParams.subscribe(params => {
+    this.querySub = this.route.queryParams.subscribe(params => {
       if (params['filtro'] && ['todos', 'pendente', 'pago', 'vencido', 'parcelado'].includes(params['filtro'])) {
         this.filtro = params['filtro'] as FiltroBoleto;
       }
@@ -110,6 +123,11 @@ export class BoletosPage implements OnInit {
     this.atualizarVencidos();
     this.cdr.markForCheck();
   }
+
+  ngOnDestroy() {
+    this.querySub?.unsubscribe();
+  }
+
 
   async ionViewWillEnter() {
     // No ionViewWillEnter apenas recarrega dados (userId já disponível)
@@ -324,7 +342,48 @@ export class BoletosPage implements OnInit {
     this.grupoParaExcluir = null;
   }
 
+  iniciarEditar(b: Boleto, e: Event) {
+    e.stopPropagation();
+    this.editandoId = b.id;
+    this.editandoGrupoId = null;
+    this.novaForm = {
+      descricao: b.nomeOriginal || b.descricao,
+      valor: b.valor,
+      vencimento: b.vencimento,
+      banco: b.banco || '',
+      ehParcelado: false,
+      totalParcelas: 2,
+      tipoValor: 'total',
+      temJuros: false,
+      taxaJuros: null
+    };
+    this.erroForm = '';
+    this.mostrarModal = true;
+  }
+
+  iniciarEditarGrupo(g: GrupoParcelamento, e: Event) {
+    e.stopPropagation();
+    this.editandoGrupoId = g.grupoId;
+    this.editandoId = null;
+    const primeiro = g.itens[0];
+    this.novaForm = {
+      descricao: g.nome,
+      valor: g.valorTotal,
+      vencimento: g.proximoVencimento || (primeiro ? primeiro.vencimento : this.fmt(new Date())),
+      banco: primeiro?.banco || '',
+      ehParcelado: true,
+      totalParcelas: g.totalParcelas,
+      tipoValor: 'total',
+      temJuros: !!g.temJuros,
+      taxaJuros: g.taxaJuros || null
+    };
+    this.erroForm = '';
+    this.mostrarModal = true;
+  }
+
   abrirModal() {
+    this.editandoId = null;
+    this.editandoGrupoId = null;
     this.novaForm = {
       descricao: '',
       valor: null,
@@ -342,6 +401,8 @@ export class BoletosPage implements OnInit {
 
   fecharModal() {
     this.mostrarModal = false;
+    this.editandoId = null;
+    this.editandoGrupoId = null;
   }
 
   salvar() {
@@ -362,7 +423,41 @@ export class BoletosPage implements OnInit {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
 
-    if (this.novaForm.ehParcelado) {
+    if (this.editandoId) {
+      const idx = this.boletos.findIndex(b => b.id === this.editandoId);
+      if (idx !== -1) {
+        const v = new Date(this.novaForm.vencimento + 'T00:00:00');
+        this.boletos[idx] = {
+          ...this.boletos[idx],
+          descricao: this.novaForm.descricao.trim(),
+          valor: Number(this.novaForm.valor),
+          vencimento: this.novaForm.vencimento,
+          banco: this.novaForm.banco?.trim() || undefined,
+          status: this.boletos[idx].status === 'pago' ? 'pago' : (v < hoje ? 'vencido' : 'pendente')
+        };
+      }
+    } else if (this.editandoGrupoId) {
+      const novoNome = this.novaForm.descricao.trim();
+      const novoBanco = this.novaForm.banco?.trim() || undefined;
+      const novoTotal = Number(this.valorTotalCalculado.toFixed(2));
+      const novoValorParcela = Number(this.valorParcelaCalculado.toFixed(2));
+
+      this.boletos = this.boletos.map(b => {
+        if (b.grupoId === this.editandoGrupoId) {
+          return {
+            ...b,
+            nomeOriginal: novoNome,
+            descricao: `${novoNome} (${b.parcelaAtual || 1}/${b.totalParcelas || this.novaForm.totalParcelas})`,
+            banco: novoBanco,
+            valor: novoValorParcela,
+            valorTotalCompra: novoTotal,
+            temJuros: this.novaForm.temJuros,
+            taxaJuros: (this.novaForm.temJuros && this.novaForm.taxaJuros) ? Number(this.novaForm.taxaJuros) : undefined
+          };
+        }
+        return b;
+      });
+    } else if (this.novaForm.ehParcelado) {
       const totalParc = Math.max(2, Math.min(60, Number(this.novaForm.totalParcelas) || 2));
       const valParcela = Number(this.valorParcelaCalculado.toFixed(2));
       const valTotal = Number(this.valorTotalCalculado.toFixed(2));

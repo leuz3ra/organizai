@@ -9,7 +9,8 @@ import {
   homeOutline, checkmarkCircleOutline, ellipseOutline,
   waterOutline, flashOutline, wifiOutline, carOutline,
   calendarOutline, refreshOutline, cartOutline, carSportOutline,
-  busOutline, medkitOutline, appsOutline, removeCircleOutline
+  busOutline, medkitOutline, appsOutline, removeCircleOutline,
+  createOutline
 } from 'ionicons/icons';
 import { UserStorageService } from '../../services/user-storage.service';
 import { formatBRL } from '../../utils/formatters';
@@ -41,6 +42,7 @@ export class ContasFixasPage implements OnInit {
   mostrarModal = false;
   mostrarConfirmacao = false;
   idParaExcluir: string | null = null;
+  editandoId: string | null = null;
   erroForm = '';
 
   readonly categorias: { valor: CatCF; label: string; icon: string; cor: string }[] = [
@@ -66,7 +68,12 @@ export class ContasFixasPage implements OnInit {
       homeOutline, checkmarkCircleOutline, ellipseOutline,
       waterOutline, flashOutline, wifiOutline, carOutline,
       calendarOutline, refreshOutline, cartOutline, carSportOutline,
-      busOutline, medkitOutline, appsOutline, removeCircleOutline });
+      busOutline, medkitOutline, appsOutline, removeCircleOutline,
+      createOutline });
+  }
+
+  trackByConta(index: number, c: ContaFixa): string {
+    return c.id;
   }
 
   async ngOnInit() {
@@ -132,22 +139,62 @@ export class ContasFixasPage implements OnInit {
   confirmarExclusao() { if (this.idParaExcluir) { this.contas = this.contas.filter(c => c.id !== this.idParaExcluir); this.salvarLS(); } this.mostrarConfirmacao = false; this.idParaExcluir = null; }
   cancelarExclusao() { this.mostrarConfirmacao = false; this.idParaExcluir = null; }
 
-  abrirModal() { this.novaForm = { descricao: '', valor: null, diaVencimento: 1, categoria: 'outros' }; this.erroForm = ''; this.mostrarModal = true; }
-  fecharModal() { this.mostrarModal = false; }
+  iniciarEditar(c: ContaFixa, e: Event) {
+    e.stopPropagation();
+    this.editandoId = c.id;
+    this.novaForm = {
+      descricao: c.descricao,
+      valor: c.valor,
+      diaVencimento: c.diaVencimento,
+      categoria: c.categoria
+    };
+    this.erroForm = '';
+    this.mostrarModal = true;
+  }
+
+  abrirModal() {
+    this.editandoId = null;
+    this.novaForm = { descricao: '', valor: null, diaVencimento: 1, categoria: 'outros' };
+    this.erroForm = '';
+    this.mostrarModal = true;
+  }
+
+  fecharModal() {
+    this.mostrarModal = false;
+    this.editandoId = null;
+  }
 
   salvar() {
     this.erroForm = '';
     if (!this.novaForm.descricao?.trim()) { this.erroForm = 'Informe a descrição.'; return; }
     if (!this.novaForm.valor || this.novaForm.valor <= 0) { this.erroForm = 'Informe um valor válido.'; return; }
-    this.contas.push({
-      id: this.id(), descricao: this.novaForm.descricao.trim(),
-      valor: Number(this.novaForm.valor),
-      diaVencimento: Number(this.novaForm.diaVencimento) || 1,
-      categoria: this.novaForm.categoria, status: 'pendente',
-      criadoEm: new Date().toISOString()
-    });
+
+    if (this.editandoId) {
+      const idx = this.contas.findIndex(c => c.id === this.editandoId);
+      if (idx !== -1) {
+        this.contas[idx] = {
+          ...this.contas[idx],
+          descricao: this.novaForm.descricao.trim(),
+          valor: Number(this.novaForm.valor),
+          diaVencimento: Number(this.novaForm.diaVencimento) || 1,
+          categoria: this.novaForm.categoria
+        };
+      }
+    } else {
+      this.contas.push({
+        id: this.id(),
+        descricao: this.novaForm.descricao.trim(),
+        valor: Number(this.novaForm.valor),
+        diaVencimento: Number(this.novaForm.diaVencimento) || 1,
+        categoria: this.novaForm.categoria,
+        status: 'pendente',
+        criadoEm: new Date().toISOString()
+      });
+    }
+
     this.contas.sort((a, b) => a.diaVencimento - b.diaVencimento);
-    this.salvarLS(); this.fecharModal();
+    this.salvarLS();
+    this.fecharModal();
   }
 
   fmt(v: number): string { return formatBRL(v); }

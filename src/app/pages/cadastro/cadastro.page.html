@@ -62,9 +62,10 @@
               <input
                 [type]="mostrarSenha ? 'text' : 'password'"
                 [(ngModel)]="senha"
+                (ngModelChange)="onSenhaInput()"
                 name="senha"
                 placeholder="Crie uma senha segura"
-                autocomplete="new-password"
+                autocomplete="off"
                 required>
               <button type="button" class="btn-toggle-pass" (click)="toggleMostrarSenha()">
                 <ion-icon [name]="mostrarSenha ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
@@ -91,7 +92,7 @@
             <div class="checklist-criterios">
               <div
                 class="criterio-item"
-                *ngFor="let c of criteriosSenha"
+                *ngFor="let c of criteriosSenha; trackBy: trackByCriterio"
                 [class.criterio-valido]="c.valido">
                 <ion-icon [name]="c.valido ? 'checkmark-circle-outline' : 'close-circle-outline'"></ion-icon>
                 <span>{{ c.label }}</span>
@@ -109,7 +110,7 @@
                 [(ngModel)]="confirmarSenha"
                 name="confirmarSenha"
                 placeholder="Digite a senha novamente"
-                autocomplete="new-password"
+                autocomplete="off"
                 required>
               <button type="button" class="btn-toggle-pass" (click)="toggleMostrarConfirmarSenha()">
                 <ion-icon [name]="mostrarConfirmarSenha ? 'eye-off-outline' : 'eye-outline'"></ion-icon>

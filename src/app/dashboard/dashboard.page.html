@@ -26,7 +26,10 @@
   <!-- ============================================= -->
   <div class="hero">
     <div class="hero-text">
-      <p class="hero-label">Painel Financeiro</p>
+      <div class="hero-label-row">
+        <p class="hero-label">Painel Financeiro</p>
+        <div class="dash-mini-spinner" *ngIf="carregandoDados" title="Atualizando dados..."></div>
+      </div>
       <h2 class="hero-title">{{ saudacao }}</h2>
       <p class="hero-sub">Seu dinheiro organizado com simplicidade e clareza.</p>
     </div>
@@ -191,8 +194,17 @@
   <div class="tool-card" *ngIf="ferramentaAtiva === 'conversor'">
 
     <div class="tool-card__header">
-      <ion-icon name="swap-horizontal" class="tool-card__icon"></ion-icon>
-      <h3>Conversor de Moedas</h3>
+      <div class="tool-card__header-left">
+        <ion-icon name="swap-horizontal" class="tool-card__icon"></ion-icon>
+        <h3>Conversor de Moedas</h3>
+      </div>
+      <button class="cotacao-badge-status" type="button" (click)="carregarCotacoes(true)" [title]="'Atualizar cotação agora'">
+        <span class="pulse-dot" [class.pulse-dot--loading]="carregandoCotacoes" [class.pulse-dot--error]="erroCotacoes"></span>
+        <span class="status-txt" *ngIf="carregandoCotacoes">Atualizando...</span>
+        <span class="status-txt" *ngIf="!carregandoCotacoes && !erroCotacoes">Ao vivo {{ ultimaAtualizacaoCotacoes ? '(' + ultimaAtualizacaoCotacoes + ')' : '' }}</span>
+        <span class="status-txt" *ngIf="!carregandoCotacoes && erroCotacoes">Off-line</span>
+        <ion-icon name="refresh-outline" class="refresh-icon" [class.girando]="carregandoCotacoes"></ion-icon>
+      </button>
     </div>
 
     <!-- SELETORES COM BANDEIRAS REAIS -->
@@ -247,7 +259,14 @@
       </div>
     </div>
 
+    <!-- TAXA DE CÂMBIO DE REFERÊNCIA EM TEMPO REAL -->
+    <div class="conversor-taxa-info">
+      <span>1 {{ moedaOrigem }} = {{ getTaxaFormatada() }} {{ moedaDestino }}</span>
+      <span class="conversor-fonte">Cotação comercial oficial</span>
+    </div>
+
   </div>
+
 
 
   <!-- CALCULADORA DE PERCENTUAL (ROBUSTA & TEMPO REAL) -->

@@ -1,3 +1,7 @@
 <ion-app>
+  <!-- INDICADOR CIRCULAR DE CARREGAMENTO ENTRE PÁGINAS -->
+  <div class="global-route-loader" *ngIf="carregandoRota" aria-label="Carregando...">
+    <div class="route-spinner-circle"></div>
+  </div>
   <ion-router-outlet></ion-router-outlet>
 </ion-app>

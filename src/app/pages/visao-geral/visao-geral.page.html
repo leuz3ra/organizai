@@ -8,6 +8,14 @@
     </div>
   </div>
 
+  <!-- INDICADOR DE CARREGAMENTO (CÍRCULO PEQUENO) -->
+  <div class="visao-loading-wrap" *ngIf="carregando">
+    <div class="mini-spinner-circle"></div>
+    <span>Carregando informações...</span>
+  </div>
+
+  <ng-container *ngIf="!carregando">
+
   <!-- ============================================= -->
   <!-- CARD DE RENDA MENSAL                          -->
   <!-- ============================================= -->
@@ -236,6 +244,8 @@
     <h3>Renda não informada</h3>
     <p>Cadastre sua renda mensal acima para receber análises, dicas e usar as calculadoras automáticas.</p>
   </div>
+
+  </ng-container>
 
   <div style="height:48px"></div>
 </ion-content>

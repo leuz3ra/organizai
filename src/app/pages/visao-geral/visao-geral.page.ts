@@ -39,6 +39,7 @@ interface Vencimento {
   imports: [CommonModule, FormsModule, IonContent, IonIcon]
 })
 export class VisaoGeralPage implements OnInit {
+  carregando: boolean = true;
   rendaMensal: number = 0;
   salarioInput: string = '';
   editandoSalario: boolean = false;
@@ -85,76 +86,84 @@ export class VisaoGeralPage implements OnInit {
   }
 
   async carregarDados() {
-    await this.userStorage.carregarUsuarioAtual();
+    this.carregando = true;
+    this.cdr.markForCheck();
 
-    // Carregar salário
-    const renda = this.userStorage.getItem('renda_mensal');
-    if (renda) {
-      this.rendaMensal = parseFloat(renda);
-      this.salarioInput = this.rendaMensal.toString();
-      this.editandoSalario = false;
-    } else {
-      this.editandoSalario = true;
-    }
+    let contas: any[] = [];
+    let boletos: any[] = [];
 
-    let assinaturas = [];
-    let contas = [];
-    let boletos = [];
-
-    // Carregar Assinaturas
     try {
-      assinaturas = JSON.parse(this.userStorage.getItem('assinaturas') || '[]');
-      this.totalAssinaturas = assinaturas
-        .filter((a: any) => a.status === 'ativo')
-        .reduce((sum: number, a: any) => {
-          let v = Number(a.valor);
-          if (a.ciclo === 'anual') v = v / 12;
-          if (a.ciclo === 'semanal') v = v * 4.33;
-          return sum + v;
-        }, 0);
-    } catch { this.totalAssinaturas = 0; }
+      await this.userStorage.carregarUsuarioAtual();
 
-    // Carregar Contas Fixas
-    try {
-      contas = JSON.parse(this.userStorage.getItem('contas_fixas') || '[]');
-      this.totalContasFixas = contas.reduce((sum: number, c: any) => sum + Number(c.valor), 0);
-    } catch { this.totalContasFixas = 0; }
-
-    // Carregar Boletos
-    try {
-      boletos = JSON.parse(this.userStorage.getItem('boletos') || '[]');
-      const hoje = new Date();
-      hoje.setHours(0, 0, 0, 0);
-      const fimDoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
-
-      this.totalBoletosPendentes = boletos
-        .filter((b: any) => {
-          if (b.status === 'pago') return false;
-          if (!b.vencimento) return true;
-          const d = new Date(b.vencimento + 'T00:00:00');
-          return d <= fimDoMes;
-        })
-        .reduce((sum: number, b: any) => sum + Number(b.valor), 0);
-    } catch { this.totalBoletosPendentes = 0; }
-
-    // Carregar total guardado em Metas via Supabase
-    try {
-      const [metas, pagamentos] = await Promise.all([
-        this.metasService.listarMetas(),
-        this.metasService.listarTodosPagamentosUsuario()
-      ]);
-
-      let totalGuardado = 0;
-      for (const m of metas) {
-        const pagos = pagamentos.filter(p => p.meta_id === m.id && p.pago).length;
-        totalGuardado += (pagos * (m.valor_por_periodo || 0));
+      // Carregar salário
+      const renda = this.userStorage.getItem('renda_mensal');
+      if (renda) {
+        this.rendaMensal = parseFloat(renda);
+        this.salarioInput = this.rendaMensal.toString();
+        this.editandoSalario = false;
+      } else {
+        this.editandoSalario = true;
       }
-      this.totalPoupadoMetas = totalGuardado;
-    } catch {
-      this.totalPoupadoMetas = 0;
-    }
 
-    this.calcularProximosVencimentos(contas, boletos);
+      let assinaturas: any[] = [];
+
+      // Carregar Assinaturas
+      try {
+        assinaturas = JSON.parse(this.userStorage.getItem('assinaturas') || '[]');
+        this.totalAssinaturas = assinaturas
+          .filter((a: any) => a.status === 'ativo')
+          .reduce((sum: number, a: any) => {
+            let v = Number(a.valor);
+            if (a.ciclo === 'anual') v = v / 12;
+            if (a.ciclo === 'semanal') v = v * 4.33;
+            return sum + v;
+          }, 0);
+      } catch { this.totalAssinaturas = 0; }
+
+      // Carregar Contas Fixas
+      try {
+        contas = JSON.parse(this.userStorage.getItem('contas_fixas') || '[]');
+        this.totalContasFixas = contas.reduce((sum: number, c: any) => sum + Number(c.valor), 0);
+      } catch { this.totalContasFixas = 0; }
+
+      // Carregar Boletos
+      try {
+        boletos = JSON.parse(this.userStorage.getItem('boletos') || '[]');
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        const fimDoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
+
+        this.totalBoletosPendentes = boletos
+          .filter((b: any) => {
+            if (b.status === 'pago') return false;
+            if (!b.vencimento) return true;
+            const d = new Date(b.vencimento + 'T00:00:00');
+            return d <= fimDoMes;
+          })
+          .reduce((sum: number, b: any) => sum + Number(b.valor), 0);
+      } catch { this.totalBoletosPendentes = 0; }
+
+      // Carregar total guardado em Metas via Supabase
+      try {
+        const [metas, pagamentos] = await Promise.all([
+          this.metasService.listarMetas(),
+          this.metasService.listarTodosPagamentosUsuario()
+        ]);
+
+        let totalGuardado = 0;
+        for (const m of metas) {
+          const pagos = pagamentos.filter(p => p.meta_id === m.id && p.pago).length;
+          totalGuardado += (pagos * (m.valor_por_periodo || 0));
+        }
+        this.totalPoupadoMetas = totalGuardado;
+      } catch {
+        this.totalPoupadoMetas = 0;
+      }
+    } finally {
+      this.calcularProximosVencimentos(contas, boletos);
+      this.carregando = false;
+      this.cdr.markForCheck();
+    }
   }
 
   calcularProximosVencimentos(contas: any[], boletos: any[]) {

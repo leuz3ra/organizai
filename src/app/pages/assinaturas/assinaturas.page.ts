@@ -8,14 +8,15 @@ import {
   arrowBackOutline, addOutline, closeOutline, trashOutline,
   tvOutline, checkmarkCircleOutline, ellipseOutline,
   calendarOutline, chevronDownOutline, pauseOutline,
-  playOutline, refreshOutline, searchOutline, banOutline
+  playOutline, refreshOutline, searchOutline, banOutline,
+  createOutline
 } from 'ionicons/icons';
 import { UserStorageService } from '../../services/user-storage.service';
 import { formatBRL } from '../../utils/formatters';
 
 export type CicloAssinatura = 'mensal' | 'anual' | 'semanal';
 export type StatusAssinatura = 'ativo' | 'pausado' | 'cancelado';
-export type CategoriaAssinatura = 'streaming' | 'musica' | 'jogos' | 'produtividade' | 'noticias' | 'saude' | 'outros';
+export type CategoriaAssinatura = 'streaming' | 'musica' | 'jogos' | 'produtividade' | 'noticias' | 'saude' | 'outros' | string;
 
 export interface Assinatura {
   id: string;
@@ -24,7 +25,7 @@ export interface Assinatura {
   ciclo: CicloAssinatura;
   dataRenovacao: string;
   status: StatusAssinatura;
-  categoria: CategoriaAssinatura;
+  categoria: string;
   emoji: string;         // usado quando não é serviço popular
   logoUrl?: string;      // URL da logo oficial (Simple Icons CDN)
   cor: string;
@@ -90,6 +91,7 @@ export class AssinaturasPage implements OnInit {
   mostrarConfirmacao = false;
   mostrarSugestoes = false;
   idParaExcluir: string | null = null;
+  editandoId: string | null = null;
   erroForm = '';
   buscaSugestao = '';
 
@@ -117,6 +119,7 @@ export class AssinaturasPage implements OnInit {
     valor: number | undefined;
     ciclo: CicloAssinatura;
     categoria: CategoriaAssinatura;
+    categoriaOutros?: string;
     emoji: string;
     logoUrl: string;
     cor: string;
@@ -137,8 +140,13 @@ export class AssinaturasPage implements OnInit {
       arrowBackOutline, addOutline, closeOutline, trashOutline,
       tvOutline, checkmarkCircleOutline, ellipseOutline,
       calendarOutline, chevronDownOutline, pauseOutline,
-      playOutline, refreshOutline, searchOutline, banOutline
+      playOutline, refreshOutline, searchOutline, banOutline,
+      createOutline
     });
+  }
+
+  trackByAssinatura(index: number, a: Assinatura): string {
+    return a.id;
   }
 
   async ngOnInit() {
@@ -244,7 +252,35 @@ export class AssinaturasPage implements OnInit {
 
   // ── MODAL ─────────────────────────────────────────────────
 
+  iniciarEditar(a: Assinatura, e: Event) {
+    e.stopPropagation();
+    this.editandoId = a.id;
+    this.erroForm = '';
+    this.mostrarSugestoes = false;
+
+    const catPadrao = this.categorias.find(c => c.valor === a.categoria);
+    const categoria = catPadrao ? a.categoria : 'outros';
+    const categoriaOutros = catPadrao ? '' : a.categoria;
+    const dia = parseInt(a.dataRenovacao, 10) || 1;
+
+    this.novaForm = {
+      nome: a.nome,
+      emoji: a.emoji || '📱',
+      logoUrl: a.logoUrl || '',
+      cor: a.cor || '#555555',
+      valor: a.valor,
+      ciclo: a.ciclo || 'mensal',
+      categoria: categoria as CategoriaAssinatura,
+      categoriaOutros: categoriaOutros,
+      diaRenovacao: dia,
+      isPopular: !!a.logoUrl,
+      mostrarOutro: !catPadrao
+    };
+    this.mostrarModal = true;
+  }
+
   abrirModal() {
+    this.editandoId = null;
     this.novaForm = this.formVazio();
     this.erroForm = '';
     this.buscaSugestao = '';
@@ -252,7 +288,10 @@ export class AssinaturasPage implements OnInit {
     this.mostrarSugestoes = true; // Mostra sugestões por padrão
   }
 
-  fecharModal() { this.mostrarModal = false; }
+  fecharModal() {
+    this.mostrarModal = false;
+    this.editandoId = null;
+  }
 
   selecionarSugestao(s: ServicoPopular) {
     this.novaForm.nome       = s.nome;
@@ -281,21 +320,42 @@ export class AssinaturasPage implements OnInit {
     if (!this.novaForm.nome?.trim()) { this.erroForm = 'Informe o nome do serviço.'; return; }
     if (!this.novaForm.valor || this.novaForm.valor <= 0) { this.erroForm = 'Informe um valor válido.'; return; }
 
-    const nova: Assinatura = {
-      id: this.id(),
-      nome: this.novaForm.nome.trim(),
-      valor: Number(this.novaForm.valor),
-      ciclo: this.novaForm.ciclo || 'mensal',
-      dataRenovacao: String(this.novaForm.diaRenovacao || 1),
-      status: 'ativo',
-      categoria: this.novaForm.categoria || 'outros',
-      emoji: this.novaForm.emoji || '📱',
-      logoUrl: this.novaForm.isPopular ? this.novaForm.logoUrl : undefined,
-      cor: this.novaForm.cor || '#555555',
-      criadoEm: new Date().toISOString()
-    };
+    const categoriaFinal = (this.novaForm.categoria === 'outros' && this.novaForm.categoriaOutros?.trim())
+      ? this.novaForm.categoriaOutros.trim()
+      : (this.novaForm.categoria || 'outros');
 
-    this.assinaturas.unshift(nova);
+    if (this.editandoId) {
+      const idx = this.assinaturas.findIndex(a => a.id === this.editandoId);
+      if (idx !== -1) {
+        this.assinaturas[idx] = {
+          ...this.assinaturas[idx],
+          nome: this.novaForm.nome.trim(),
+          valor: Number(this.novaForm.valor),
+          ciclo: this.novaForm.ciclo || 'mensal',
+          dataRenovacao: String(this.novaForm.diaRenovacao || 1),
+          categoria: categoriaFinal,
+          emoji: this.novaForm.emoji || '📱',
+          logoUrl: this.novaForm.logoUrl || undefined,
+          cor: this.novaForm.cor || '#555555'
+        };
+      }
+    } else {
+      const nova: Assinatura = {
+        id: this.id(),
+        nome: this.novaForm.nome.trim(),
+        valor: Number(this.novaForm.valor),
+        ciclo: this.novaForm.ciclo || 'mensal',
+        dataRenovacao: String(this.novaForm.diaRenovacao || 1),
+        status: 'ativo',
+        categoria: categoriaFinal,
+        emoji: this.novaForm.emoji || '📱',
+        logoUrl: this.novaForm.isPopular ? this.novaForm.logoUrl : undefined,
+        cor: this.novaForm.cor || '#555555',
+        criadoEm: new Date().toISOString()
+      };
+      this.assinaturas.unshift(nova);
+    }
+
     this.salvarLS();
     this.fecharModal();
   }
@@ -303,7 +363,19 @@ export class AssinaturasPage implements OnInit {
   // ── UTILS ──────────────────────────────────────────────────
 
   formVazio() {
-    return { nome: '', emoji: '📱', logoUrl: '', cor: '#555555', valor: undefined as number | undefined, ciclo: 'mensal' as CicloAssinatura, categoria: 'outros' as CategoriaAssinatura, diaRenovacao: 1, isPopular: false, mostrarOutro: false };
+    return {
+      nome: '',
+      emoji: '📱',
+      logoUrl: '',
+      cor: '#555555',
+      valor: undefined as number | undefined,
+      ciclo: 'mensal' as CicloAssinatura,
+      categoria: 'outros' as CategoriaAssinatura,
+      categoriaOutros: '',
+      diaRenovacao: 1,
+      isPopular: false,
+      mostrarOutro: false
+    };
   }
 
   onLogoError(a: Assinatura) { a.logoUrl = undefined; }

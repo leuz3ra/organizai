@@ -128,6 +128,13 @@ ion-content { --background: var(--c-bg); }
     }
   }
 
+  .cf-btns-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .btn-edit,
   .btn-del {
     background: transparent;
     border: none;
@@ -138,12 +145,17 @@ ion-content { --background: var(--c-bg); }
     border-radius: var(--r-sm);
     transition: color var(--t-fast);
 
-    &:hover {
-      color: var(--c-danger);
-    }
     ion-icon {
       font-size: 17px;
     }
+  }
+
+  .btn-edit:hover {
+    color: var(--c-accent);
+  }
+
+  .btn-del:hover {
+    color: var(--c-danger);
   }
 }
 

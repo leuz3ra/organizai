@@ -63,7 +63,7 @@
 
   <!-- LISTA -->
   <div class="lista" *ngIf="contas.length > 0">
-    <div class="cf-card" *ngFor="let c of contas"
+    <div class="cf-card" *ngFor="let c of contas; trackBy: trackByConta"
          [class.pago]="c.status==='pago'">
 
       <div class="cf-main">
@@ -80,9 +80,14 @@
 
         <div class="cf-direita">
           <strong class="cf-valor" [class.valor-pago]="c.status==='pago'">{{ fmt(c.valor) }}</strong>
-          <button class="btn-del" (click)="iniciarExcluir(c.id, $event)" title="Excluir">
-            <ion-icon name="trash-outline"></ion-icon>
-          </button>
+          <div class="cf-btns-row">
+            <button class="btn-edit" (click)="iniciarEditar(c, $event)" title="Editar">
+              <ion-icon name="create-outline"></ion-icon>
+            </button>
+            <button class="btn-del" (click)="iniciarExcluir(c.id, $event)" title="Excluir">
+              <ion-icon name="trash-outline"></ion-icon>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -104,7 +109,7 @@
     <div class="bottom-sheet" (click)="$event.stopPropagation()">
       <div class="bottom-sheet__handle"></div>
       <div class="bottom-sheet__header">
-        <h2>Nova Conta Fixa</h2>
+        <h2>{{ editandoId ? 'Editar Conta Fixa' : 'Nova Conta Fixa' }}</h2>
         <button (click)="fecharModal()"><ion-icon name="close-outline"></ion-icon></button>
       </div>
       <div class="bottom-sheet__body">
@@ -129,7 +134,10 @@
       </div>
       <div class="bottom-sheet__footer">
         <button class="btn btn--secondary btn--md btn--full" (click)="fecharModal()">Cancelar</button>
-        <button class="btn btn--primary btn--md btn--full" (click)="salvar()"><ion-icon name="add-outline"></ion-icon>Adicionar</button>
+        <button class="btn btn--primary btn--md btn--full" (click)="salvar()">
+          <ion-icon [name]="editandoId ? 'checkmark-circle-outline' : 'add-outline'"></ion-icon>
+          {{ editandoId ? 'Salvar Alterações' : 'Adicionar' }}
+        </button>
       </div>
     </div>
   </div>

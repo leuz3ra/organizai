@@ -18,12 +18,20 @@
     <div class="auth-card-container">
       <div class="auth-card-box">
 
-        <div class="form-header">
+        <!-- CABEÇALHO LOGIN -->
+        <div class="form-header" *ngIf="modoTela === 'login'">
           <h2>Acesse sua conta</h2>
           <p>Digite seu e-mail e senha para entrar no painel</p>
         </div>
 
-        <form (ngSubmit)="entrar()" class="form-body">
+        <!-- CABEÇALHO ESQUECI SENHA -->
+        <div class="form-header" *ngIf="modoTela === 'esqueci-senha'">
+          <h2>Recuperar senha</h2>
+          <p>Informe seu e-mail cadastrado para receber o link de redefinição</p>
+        </div>
+
+        <!-- FORMULÁRIO DE LOGIN -->
+        <form (ngSubmit)="entrar()" class="form-body" *ngIf="modoTela === 'login'">
 
           <!-- E-MAIL -->
           <div class="input-field">
@@ -58,6 +66,13 @@
             </div>
           </div>
 
+          <!-- ESQUECI MINHA SENHA -->
+          <div class="forgot-pass-wrap">
+            <button type="button" class="btn-forgot-pass" (click)="abrirEsqueciSenha()">
+              Esqueci minha senha
+            </button>
+          </div>
+
           <!-- MENSAGEM DE ERRO -->
           <div class="msg-alert msg-erro" *ngIf="erro">
             <ion-icon name="alert-circle-outline"></ion-icon>
@@ -78,6 +93,54 @@
           <div class="switch-auth-link">
             <span>Ainda não possui uma conta?</span>
             <button type="button" (click)="irParaCadastro()">Criar conta gratuita</button>
+          </div>
+
+        </form>
+
+        <!-- FORMULÁRIO DE RECUPERAÇÃO DE SENHA (CONTAINER IDÊNTICO AO DE LOGIN/CADASTRO) -->
+        <form (ngSubmit)="enviarLinkRecuperacao()" class="form-body" *ngIf="modoTela === 'esqueci-senha'">
+
+          <!-- E-MAIL -->
+          <div class="input-field">
+            <label>Endereço de E-mail Cadastrado</label>
+            <div class="input-box">
+              <ion-icon name="mail-outline" class="field-icon"></ion-icon>
+              <input
+                type="email"
+                [(ngModel)]="emailEsqueci"
+                name="emailEsqueci"
+                placeholder="seu.email@exemplo.com"
+                autocomplete="email"
+                required>
+            </div>
+          </div>
+
+          <!-- MENSAGEM DE SUCESSO -->
+          <div class="msg-alert msg-sucesso" *ngIf="sucesso">
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            <span>{{ sucesso }}</span>
+          </div>
+
+          <!-- MENSAGEM DE ERRO -->
+          <div class="msg-alert msg-erro" *ngIf="erro">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            <span>{{ erro }}</span>
+          </div>
+
+          <!-- BOTÃO ENVIAR LINK -->
+          <button
+            type="submit"
+            class="btn-auth-submit"
+            [disabled]="carregando">
+            <div class="spinner-auth" *ngIf="carregando"></div>
+            <span *ngIf="!carregando">Enviar Link de Recuperação</span>
+            <ion-icon name="arrow-forward-outline" *ngIf="!carregando"></ion-icon>
+          </button>
+
+          <!-- VOLTAR AO LOGIN -->
+          <div class="switch-auth-link">
+            <span>Lembrou de sua senha?</span>
+            <button type="button" (click)="voltarAoLogin()">Voltar para o login</button>
           </div>
 
         </form>

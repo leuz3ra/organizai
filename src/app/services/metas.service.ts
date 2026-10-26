@@ -126,6 +126,39 @@ export class MetasService {
 
 
   // =====================================================
+  // ATUALIZAR META
+  // =====================================================
+
+  async atualizarMeta(
+    id: string,
+    meta: { titulo: string; descricao?: string | null; valor_total: number; total_periodos: number }
+  ): Promise<void> {
+    const user = await this.obterUsuario();
+
+    const valorTotal = parseNum(meta.valor_total);
+    const totalPeriodos = Math.max(1, Math.round(parseNum(meta.total_periodos)));
+    const valorPorPeriodo = Number((valorTotal / totalPeriodos).toFixed(2));
+
+    const { error } = await this.supabaseService.supabase
+      .from('metas')
+      .update({
+        titulo: meta.titulo,
+        descricao: meta.descricao || null,
+        valor_total: valorTotal,
+        valor_por_periodo: valorPorPeriodo,
+        total_periodos: totalPeriodos
+      })
+      .eq('id', id)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Erro ao atualizar meta:', error);
+      throw error;
+    }
+  }
+
+
+  // =====================================================
   // EXCLUIR META
   // =====================================================
 

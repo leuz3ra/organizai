@@ -1,0 +1,163 @@
+<ion-content [fullscreen]="true">
+
+  <div class="auth-page-wrap">
+
+    <!-- BANNER PANORÂMICO NO TOPO COM PROFUNDIDADE -->
+    <div class="auth-top-banner">
+      <div class="banner-bg" [style.background-image]="'url(assets/auth_banner.jpg)'"></div>
+      <div class="banner-gradient"></div>
+
+      <div class="banner-content">
+        <img src="assets/organizai-white.png" alt="OrganizAí" class="banner-brand-logo">
+        <h1 class="banner-tagline">Redefinição de Senha</h1>
+        <p class="banner-subline">Crie uma nova credencial para proteger sua conta.</p>
+      </div>
+    </div>
+
+    <!-- CARD SOBREPOSTO IDENTICO A LOGIN / CADASTRO -->
+    <div class="auth-card-container">
+      <div class="auth-card-box">
+
+        <!-- ESTADO 1: VERIFICANDO SESSÃO -->
+        <div class="verificando-sessao-box" *ngIf="verificandoSessao">
+          <div class="spinner-auth"></div>
+          <p>Validando link de recuperação seguro...</p>
+        </div>
+
+        <!-- ESTADO 2: SESSÃO INVÁLIDA OU EXPIRADA -->
+        <div class="link-expirado-box" *ngIf="!sessaoValida && !verificandoSessao">
+          <div class="expirado-icon-wrap">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+          </div>
+          <h3>Link expirado ou inválido</h3>
+          <p>
+            Não encontramos uma autorização válida para redefinir sua senha. Isso acontece se o link já foi utilizado anteriormente ou ultrapassou o tempo limite de segurança.
+          </p>
+
+          <div class="msg-alert msg-erro" *ngIf="erro">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            <span>{{ erro }}</span>
+          </div>
+
+          <button type="button" class="btn-auth-submit" (click)="solicitarNovoLink()">
+            <span>Solicitar Novo Link de Recuperação</span>
+            <ion-icon name="arrow-forward-outline"></ion-icon>
+          </button>
+
+          <div class="switch-auth-link">
+            <span>Lembrou da senha?</span>
+            <button type="button" (click)="voltarParaLogin()">Voltar ao login</button>
+          </div>
+        </div>
+
+        <!-- ESTADO 3: FORMULÁRIO DE NOVA SENHA -->
+        <ng-container *ngIf="sessaoValida && !verificandoSessao">
+          <div class="form-header">
+            <h2>Crie sua nova senha</h2>
+            <p>Digite uma senha forte e confirme para recuperar seu acesso</p>
+          </div>
+
+          <form (ngSubmit)="salvarNovaSenha()" class="form-body">
+
+            <!-- NOVA SENHA -->
+            <div class="input-field">
+              <label>Nova Senha</label>
+              <div class="input-box">
+                <ion-icon name="lock-closed-outline" class="field-icon"></ion-icon>
+                <input
+                  [type]="mostrarSenha ? 'text' : 'password'"
+                  [(ngModel)]="senha"
+                  (ngModelChange)="onSenhaInput()"
+                  name="senha"
+                  placeholder="Crie sua nova senha"
+                  autocomplete="off"
+                  required>
+                <button type="button" class="btn-toggle-pass" (click)="toggleMostrarSenha()">
+                  <ion-icon [name]="mostrarSenha ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+                </button>
+              </div>
+            </div>
+
+            <!-- MEDIDOR DE FORÇA DE SENHA INTERATIVO -->
+            <div class="strength-meter-wrap" *ngIf="senha">
+              <div class="strength-bar-header">
+                <span>Segurança da nova senha:</span>
+                <strong [class]="'strength-label ' + nivelForca.classe">{{ nivelForca.label }}</strong>
+              </div>
+
+              <div class="strength-bar-track">
+                <div
+                  class="strength-bar-fill"
+                  [class]="nivelForca.classe"
+                  [style.width.%]="pontuacaoSenha">
+                </div>
+              </div>
+
+              <!-- CHECKLIST DE CRITÉRIOS -->
+              <div class="checklist-criterios">
+                <div
+                  class="criterio-item"
+                  *ngFor="let c of criteriosSenha; trackBy: trackByCriterio"
+                  [class.criterio-valido]="c.valido">
+                  <ion-icon [name]="c.valido ? 'checkmark-circle-outline' : 'close-circle-outline'"></ion-icon>
+                  <span>{{ c.label }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- CONFIRMAR NOVA SENHA -->
+            <div class="input-field">
+              <label>Confirmar Nova Senha</label>
+              <div class="input-box">
+                <ion-icon name="lock-closed-outline" class="field-icon"></ion-icon>
+                <input
+                  [type]="mostrarConfirmarSenha ? 'text' : 'password'"
+                  [(ngModel)]="confirmarSenha"
+                  name="confirmarSenha"
+                  placeholder="Repita a nova senha"
+                  autocomplete="off"
+                  required>
+                <button type="button" class="btn-toggle-pass" (click)="toggleMostrarConfirmarSenha()">
+                  <ion-icon [name]="mostrarConfirmarSenha ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+                </button>
+              </div>
+            </div>
+
+            <!-- MENSAGEM DE SUCESSO -->
+            <div class="msg-alert msg-sucesso" *ngIf="sucesso">
+              <ion-icon name="checkmark-circle-outline"></ion-icon>
+              <span>{{ sucesso }}</span>
+            </div>
+
+            <!-- MENSAGEM DE ERRO -->
+            <div class="msg-alert msg-erro" *ngIf="erro">
+              <ion-icon name="alert-circle-outline"></ion-icon>
+              <span>{{ erro }}</span>
+            </div>
+
+            <!-- BOTÃO PRINCIPAL -->
+            <button
+              type="submit"
+              class="btn-auth-submit"
+              [disabled]="carregando">
+              <div class="spinner-auth" *ngIf="carregando"></div>
+              <span *ngIf="!carregando">Salvar Nova Senha</span>
+              <ion-icon name="arrow-forward-outline" *ngIf="!carregando"></ion-icon>
+            </button>
+
+            <!-- LINK PARA LOGIN -->
+            <div class="switch-auth-link">
+              <span>Deseja cancelar?</span>
+              <button type="button" (click)="voltarParaLogin()">Voltar para o login</button>
+            </div>
+
+          </form>
+        </ng-container>
+
+
+      </div>
+    </div>
+
+  </div>
+
+</ion-content>

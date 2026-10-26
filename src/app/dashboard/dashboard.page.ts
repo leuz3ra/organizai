@@ -44,8 +44,10 @@ import {
   addCircleOutline,
   calendarOutline,
   shieldCheckmarkOutline,
-  timeOutline
+  timeOutline,
+  refreshOutline
 } from 'ionicons/icons';
+
 
 import { SupabaseService } from '../services/supabase.service';
 import { UserStorageService } from '../services/user-storage.service';
@@ -78,6 +80,7 @@ export interface MoedaInfo {
 export class DashboardPage implements OnInit, OnDestroy {
 
   private _inicializado = false;
+  carregandoDados = false;
 
   saudacao: string = 'Olá!';
   nomeUsuario: string = '';
@@ -169,13 +172,18 @@ export class DashboardPage implements OnInit, OnDestroy {
     }
   ];
 
-  private readonly taxasEmBRL: Record<string, number> = {
+  carregandoCotacoes = false;
+  ultimaAtualizacaoCotacoes: string | null = null;
+  erroCotacoes = false;
+
+  taxasEmBRL: Record<string, number> = {
     BRL: 1,
     USD: 5.50,
     EUR: 6.20,
     GBP: 7.30,
     JPY: 0.038
   };
+
 
   // =====================================================
   // CALCULADORA DE PERCENTUAL
@@ -232,7 +240,8 @@ export class DashboardPage implements OnInit, OnDestroy {
       addCircleOutline,
       calendarOutline,
       shieldCheckmarkOutline,
-      timeOutline
+      timeOutline,
+      refreshOutline
     });
   }
 
@@ -245,10 +254,18 @@ export class DashboardPage implements OnInit, OnDestroy {
   async ionViewWillEnter() {
     this.carregarTemaEscuro();
     this.carregarPreferenciaPrivacidade();
-    await this.carregarUsuario();
-    await this.carregarResumoFinanceiro();
+    this.carregandoDados = true;
     this.cdr.markForCheck();
+    try {
+      await this.carregarUsuario();
+      await this.carregarResumoFinanceiro();
+      this.carregarCotacoes();
+    } finally {
+      this.carregandoDados = false;
+      this.cdr.markForCheck();
+    }
   }
+
 
   ngOnDestroy() {
     // Cleanup ao sair da tela
@@ -574,6 +591,77 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.fecharSeletorMoeda();
     this.converterBRL();
   }
+
+  async carregarCotacoes(forcar = false) {
+    // 1. Tenta recuperar do cache local se atualizado há menos de 10 minutos
+    if (!forcar && typeof localStorage !== 'undefined') {
+      const cacheRaw = localStorage.getItem('organizai_cotacoes_cache');
+      const cacheTs = localStorage.getItem('organizai_cotacoes_ts');
+
+      if (cacheRaw && cacheTs) {
+        const idadeMs = Date.now() - Number(cacheTs);
+        if (idadeMs < 10 * 60 * 1000) {
+          try {
+            const dados = JSON.parse(cacheRaw);
+            this.taxasEmBRL = { ...this.taxasEmBRL, ...dados };
+            this.ultimaAtualizacaoCotacoes = new Date(Number(cacheTs)).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            this.converterBRL();
+            this.cdr.markForCheck();
+            return;
+          } catch {}
+        }
+      }
+    }
+
+    this.carregandoCotacoes = true;
+    this.erroCotacoes = false;
+    this.cdr.markForCheck();
+
+    try {
+      // API pública oficial AwesomeAPI (cotações em tempo real de Dólar, Euro, Libra e Iene frente ao Real)
+      const res = await fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,GBP-BRL,JPY-BRL');
+      if (!res.ok) throw new Error('Falha na resposta da API');
+
+      const data = await res.json();
+
+      const novasTaxas: Record<string, number> = {
+        BRL: 1,
+        USD: data.USDBRL ? parseFloat(data.USDBRL.bid) : (this.taxasEmBRL['USD'] || 5.50),
+        EUR: data.EURBRL ? parseFloat(data.EURBRL.bid) : (this.taxasEmBRL['EUR'] || 6.20),
+        GBP: data.GBPBRL ? parseFloat(data.GBPBRL.bid) : (this.taxasEmBRL['GBP'] || 7.30),
+        JPY: data.JPYBRL ? parseFloat(data.JPYBRL.bid) : (this.taxasEmBRL['JPY'] || 0.038),
+      };
+
+
+      this.taxasEmBRL = { ...this.taxasEmBRL, ...novasTaxas };
+
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('organizai_cotacoes_cache', JSON.stringify(novasTaxas));
+        localStorage.setItem('organizai_cotacoes_ts', String(Date.now()));
+      }
+
+      this.ultimaAtualizacaoCotacoes = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      console.warn('Cotação online indisponível, utilizando dados locais:', e);
+      this.erroCotacoes = true;
+    } finally {
+      this.carregandoCotacoes = false;
+      this.converterBRL();
+      this.cdr.markForCheck();
+    }
+  }
+
+  getTaxaFormatada(): string {
+    const taxaOrigem = this.taxasEmBRL[this.moedaOrigem] || 1;
+    const taxaDestino = this.taxasEmBRL[this.moedaDestino] || 1;
+    const taxaRelativa = taxaOrigem / taxaDestino;
+
+    if (taxaRelativa >= 1) {
+      return taxaRelativa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+    }
+    return taxaRelativa.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 6 });
+  }
+
 
   // =====================================================
   // CALCULADORA DE PERCENTUAL

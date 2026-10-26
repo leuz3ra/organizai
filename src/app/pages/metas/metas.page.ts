@@ -19,11 +19,13 @@ import {
   flagOutline,
   checkmarkOutline,
   trophyOutline,
-  chevronDownOutline
+  chevronDownOutline,
+  createOutline
 } from 'ionicons/icons';
 
 import { MetasService } from '../../services/metas.service';
 import { formatBRL } from '../../utils/formatters';
+import { traduzirErro } from '../../utils/error-messages';
 import { Meta, MetaPagamento } from '../../models/meta.model';
 
 interface MetaComPagamentos extends Meta {
@@ -67,6 +69,8 @@ export class MetasPage implements OnInit, OnDestroy {
   carregandoMetas = false;
 
   mostrarModal = false;
+
+  editandoId: string | null = null;
 
   salvando = false;
 
@@ -137,7 +141,8 @@ export class MetasPage implements OnInit, OnDestroy {
       flagOutline,
       checkmarkOutline,
       trophyOutline,
-      chevronDownOutline
+      chevronDownOutline,
+      createOutline
     });
   }
 
@@ -322,10 +327,38 @@ export class MetasPage implements OnInit, OnDestroy {
 
 
   // =====================================================
-  // MODAL DE NOVA META
+  // MODAL DE META (CRIAR / EDITAR)
   // =====================================================
 
+  iniciarEditar(meta: MetaComPagamentos, event: Event) {
+    event.stopPropagation();
+    this.editandoId = meta.id || null;
+    this.erroForm = '';
+
+    const temOpcao = this.opcoesMeses.some(o => o.valor === meta.total_periodos);
+    if (temOpcao) {
+      this.novaMetaForm = {
+        titulo: meta.titulo,
+        descricao: meta.descricao || '',
+        valor_total: meta.valor_total,
+        total_periodos: meta.total_periodos
+      };
+      this.mesesPersonalizado = null;
+    } else {
+      this.novaMetaForm = {
+        titulo: meta.titulo,
+        descricao: meta.descricao || '',
+        valor_total: meta.valor_total,
+        total_periodos: this.PERSONALIZAR
+      };
+      this.mesesPersonalizado = meta.total_periodos;
+    }
+
+    this.mostrarModal = true;
+  }
+
   abrirModal() {
+    this.editandoId = null;
     this.novaMetaForm = {
       titulo: '',
       descricao: '',
@@ -339,6 +372,7 @@ export class MetasPage implements OnInit, OnDestroy {
 
   fecharModal() {
     this.mostrarModal = false;
+    this.editandoId = null;
   }
 
   async salvarMeta() {
@@ -374,30 +408,54 @@ export class MetasPage implements OnInit, OnDestroy {
     try {
       const valorPorPeriodo = Number((valorTotal / meses).toFixed(2));
 
-      const meta = await this.metasService.criarMeta({
-        titulo: this.novaMetaForm.titulo.trim(),
-        descricao: this.novaMetaForm.descricao?.trim() || null,
-        valor_total: valorTotal,
-        valor_por_periodo: valorPorPeriodo,
-        total_periodos: meses
-      });
+      if (this.editandoId) {
+        await this.metasService.atualizarMeta(this.editandoId, {
+          titulo: this.novaMetaForm.titulo.trim(),
+          descricao: this.novaMetaForm.descricao?.trim() || null,
+          valor_total: valorTotal,
+          total_periodos: meses
+        });
 
-      this.metas.unshift({
-        ...meta,
-        pagamentos: [],
-        expandida: false,
-        carregando: false
-      });
+        const m = this.metas.find(item => item.id === this.editandoId);
+        if (m) {
+          m.titulo = this.novaMetaForm.titulo.trim();
+          m.descricao = this.novaMetaForm.descricao?.trim() || null;
+          m.valor_total = valorTotal;
+          m.total_periodos = meses;
+          m.valor_por_periodo = valorPorPeriodo;
+        }
 
-      this.fecharModal();
+        this.fecharModal();
+        this.cdr.markForCheck();
+      } else {
+        const meta = await this.metasService.criarMeta({
+          titulo: this.novaMetaForm.titulo.trim(),
+          descricao: this.novaMetaForm.descricao?.trim() || null,
+          valor_total: valorTotal,
+          valor_por_periodo: valorPorPeriodo,
+          total_periodos: meses
+        });
+
+        this.metas.unshift({
+          ...meta,
+          pagamentos: [],
+          expandida: false,
+          carregando: false
+        });
+
+        this.fecharModal();
+        this.cdr.markForCheck();
+      }
 
     } catch (err: any) {
       console.error('Erro ao salvar meta:', err);
-      this.erroForm = err?.message || err?.error_description || 'Erro ao salvar. Tente novamente.';
+      this.erroForm = traduzirErro(err, 'Não foi possível salvar a meta no momento. Tente novamente mais tarde.');
     } finally {
       this.salvando = false;
+      this.cdr.markForCheck();
     }
   }
+
 
 
   // =====================================================

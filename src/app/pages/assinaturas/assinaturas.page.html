@@ -53,7 +53,7 @@
 
   <!-- LISTA -->
   <div class="lista" *ngIf="filtradas.length > 0">
-    <div class="assín-card" *ngFor="let a of filtradas" [class.pausado]="a.status==='pausado'">
+    <div class="assín-card" *ngFor="let a of filtradas; trackBy: trackByAssinatura" [class.pausado]="a.status==='pausado'">
 
       <!-- LOGO / EMOJI -->
       <div class="assín-logo-wrap"
@@ -92,6 +92,11 @@
         </strong>
         <span class="assín-ciclo-txt">{{ getLabelCiclo(a.ciclo) }}</span>
         <div class="assín-btns" style="margin-top: auto; display: flex; gap: 6px;">
+          <button class="btn-editar-assin"
+            (click)="iniciarEditar(a, $event)"
+            title="Editar assinatura">
+            <ion-icon name="create-outline"></ion-icon>
+          </button>
           <button class="btn-toggle"
             *ngIf="a.status !== 'cancelado'"
             [class.pausado]="a.status==='pausado'"
@@ -131,7 +136,7 @@
       <div class="bottom-sheet__handle"></div>
 
       <div class="bottom-sheet__header">
-        <h2>Nova Assinatura</h2>
+        <h2>{{ editandoId ? 'Editar Assinatura' : 'Nova Assinatura' }}</h2>
         <button (click)="fecharModal()"><ion-icon name="close-outline"></ion-icon></button>
       </div>
 
@@ -244,6 +249,16 @@
             </div>
           </div>
 
+          <!-- CAMPO CATEGORIA PERSONALIZADA (quando categoria for 'outros') -->
+          <div class="field" *ngIf="novaForm.categoria === 'outros'">
+            <label>Especifique a Categoria</label>
+            <input
+              type="text"
+              placeholder="Ex: Academia, Cursos, Seguro, Clube..."
+              [(ngModel)]="novaForm.categoriaOutros"
+              maxlength="35">
+          </div>
+
           <p class="form-error" *ngIf="erroForm">{{ erroForm }}</p>
 
         </ng-container>
@@ -253,8 +268,8 @@
       <div class="bottom-sheet__footer" *ngIf="novaForm.isPopular || novaForm.mostrarOutro">
         <button class="btn btn--secondary btn--md btn--full" (click)="fecharModal()">Cancelar</button>
         <button class="btn btn--primary btn--md btn--full" (click)="salvar()">
-          <ion-icon name="add-outline"></ion-icon>
-          Adicionar
+          <ion-icon [name]="editandoId ? 'checkmark-circle-outline' : 'add-outline'"></ion-icon>
+          {{ editandoId ? 'Salvar Alterações' : 'Adicionar' }}
         </button>
       </div>
       <div class="bottom-sheet__footer" *ngIf="!novaForm.isPopular && !novaForm.mostrarOutro">

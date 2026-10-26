@@ -410,3 +410,38 @@ ion-content {
 .venc-direita { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .venc-valor { font-size: 14px; font-weight: 800; color: var(--c-text-primary); }
 .venc-dias { font-size: 11px; font-weight: 600; color: var(--c-text-secondary); &.vencido { color: #EF4444; font-weight: 700; } &.hoje { color: #F59E0B; font-weight: 700; } }
+
+/* ============================================================
+   LOADING SPINNER CIRCULAR
+   ============================================================ */
+.visao-loading-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 80px 20px;
+
+  span {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--c-text-muted);
+    letter-spacing: -0.1px;
+  }
+}
+
+.mini-spinner-circle {
+  width: 26px;
+  height: 26px;
+  border: 2.5px solid var(--c-border);
+  border-top-color: var(--c-accent);
+  border-radius: 50%;
+  animation: girar 0.65s linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+

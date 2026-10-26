@@ -232,6 +232,36 @@ ion-content {
 
 /* ============================================================
    ALERTAS
+.forgot-pass-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -4px;
+  margin-bottom: 2px;
+}
+
+.btn-forgot-pass {
+  background: none;
+  border: none;
+  color: var(--c-accent);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 0;
+  font-family: var(--font);
+  transition: opacity var(--t-fast);
+
+  &:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+  }
+
+  &:active {
+    opacity: 0.6;
+  }
+}
+
+/* ============================================================
+   ALERTAS
    ============================================================ */
 .msg-alert {
   display: flex;
@@ -248,6 +278,12 @@ ion-content {
     background: var(--c-danger-light);
     border: 1px solid var(--c-danger-border);
     color: var(--c-danger);
+  }
+
+  &.msg-sucesso {
+    background: var(--c-accent-light);
+    border: 1px solid var(--c-accent-border);
+    color: var(--c-accent);
   }
 }
 

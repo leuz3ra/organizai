@@ -97,7 +97,10 @@
 
           <!-- AÇÕES DO CARD -->
           <div class="card-acoes">
-            <button class="btn-excluir" (click)="confirmarExclusao(meta.id!, $event)">
+            <button class="btn-editar" (click)="iniciarEditar(meta, $event)" title="Editar meta">
+              <ion-icon name="create-outline"></ion-icon>
+            </button>
+            <button class="btn-excluir" (click)="confirmarExclusao(meta.id!, $event)" title="Excluir meta">
               <ion-icon name="trash-outline"></ion-icon>
             </button>
             <ion-icon
@@ -173,7 +176,7 @@
     <div class="modal" (click)="$event.stopPropagation()">
 
       <div class="modal-header">
-        <h2>Nova Meta</h2>
+        <h2>{{ editandoId ? 'Editar Meta' : 'Nova Meta' }}</h2>
         <button class="btn-fechar" (click)="fecharModal()">
           <ion-icon name="close-outline"></ion-icon>
         </button>
@@ -242,7 +245,7 @@
         </button>
         <button class="btn-salvar" (click)="salvarMeta()" [disabled]="salvando">
           <div class="spinner spinner-sm branco" *ngIf="salvando"></div>
-          <span *ngIf="!salvando">Criar Meta</span>
+          <span *ngIf="!salvando">{{ editandoId ? 'Salvar Alterações' : 'Criar Meta' }}</span>
         </button>
       </div>
 

@@ -19,6 +19,10 @@ export const routes: Routes = [
     canActivate: [noAuthGuard],
   },
   {
+    path: 'redefinir-senha',
+    loadComponent: () => import('./pages/redefinir-senha/redefinir-senha.page').then(m => m.RedefinirSenhaPage),
+  },
+  {
     path: 'dashboard',
     loadComponent: () => import('./dashboard/dashboard.page').then(m => m.DashboardPage),
     canActivate: [authGuard],

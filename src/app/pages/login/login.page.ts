@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 import {
   IonContent,
@@ -18,10 +19,12 @@ import {
   shieldCheckmarkOutline,
   arrowForwardOutline,
   alertCircleOutline,
+  checkmarkCircleOutline,
   sparklesOutline
 } from 'ionicons/icons';
 
 import { SupabaseService } from '../../services/supabase.service';
+import { traduzirErro } from '../../utils/error-messages';
 
 @Component({
   selector: 'app-login',
@@ -35,18 +38,25 @@ import { SupabaseService } from '../../services/supabase.service';
     IonIcon
   ]
 })
-export class LoginPage implements OnInit {
+export class LoginPage implements OnInit, OnDestroy {
+
+  modoTela: 'login' | 'esqueci-senha' = 'login';
 
   email = '';
   senha = '';
+  emailEsqueci = '';
   mostrarSenha = false;
 
   carregando = false;
   erro = '';
+  sucesso = '';
+
+  private querySub?: Subscription;
 
   constructor(
     private supabaseService: SupabaseService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {
     addIcons({
       eyeOutline,
@@ -57,12 +67,27 @@ export class LoginPage implements OnInit {
       shieldCheckmarkOutline,
       arrowForwardOutline,
       alertCircleOutline,
+      checkmarkCircleOutline,
       sparklesOutline
     });
   }
 
   async ngOnInit() {
+    this.querySub = this.route.queryParams.subscribe(params => {
+      if (params && params['modo'] === 'esqueci') {
+        this.modoTela = 'esqueci-senha';
+      }
+      if (params && params['redefinida'] === 'true') {
+        this.sucesso = 'Sua nova senha foi cadastrada com sucesso! Faça login para continuar.';
+        this.modoTela = 'login';
+      }
+    });
+
     await this.verificarSessao();
+  }
+
+  ngOnDestroy() {
+    this.querySub?.unsubscribe();
   }
 
   async ionViewWillEnter() {
@@ -70,6 +95,23 @@ export class LoginPage implements OnInit {
   }
 
   private async verificarSessao() {
+    const hash = typeof window !== 'undefined' ? window.location.hash || '' : '';
+    const search = typeof window !== 'undefined' ? window.location.search || '' : '';
+
+    if (
+      (hash.includes('type=recovery') && hash.includes('access_token')) ||
+      (search.includes('type=recovery') && search.includes('code'))
+    ) {
+      await this.supabaseService.processarTokensUrl();
+      const fragment = hash ? hash.substring(1) : undefined;
+      this.router.navigate(['/redefinir-senha'], {
+        replaceUrl: true,
+        fragment,
+        queryParamsHandling: 'preserve'
+      });
+      return;
+    }
+
     try {
       const user = await this.supabaseService.usuarioAtual();
       if (user) {
@@ -80,12 +122,28 @@ export class LoginPage implements OnInit {
     }
   }
 
+
+
   toggleMostrarSenha() {
     this.mostrarSenha = !this.mostrarSenha;
   }
 
+  abrirEsqueciSenha() {
+    this.modoTela = 'esqueci-senha';
+    this.emailEsqueci = this.email.trim();
+    this.erro = '';
+    this.sucesso = '';
+  }
+
+  voltarAoLogin() {
+    this.modoTela = 'login';
+    this.erro = '';
+    this.sucesso = '';
+  }
+
   async entrar() {
     this.erro = '';
+    this.sucesso = '';
 
     const emailFormatado = this.email.trim().toLowerCase();
 
@@ -112,23 +170,40 @@ export class LoginPage implements OnInit {
 
     } catch (error: any) {
       console.error('Erro ao fazer login:', error);
-
-      const msg = (error?.message || '').toLowerCase();
-      if (msg.includes('invalid login credentials') || msg.includes('invalid_credentials')) {
-        this.erro = 'E-mail ou senha incorretos. Verifique suas credenciais.';
-      } else if (msg.includes('email not confirmed')) {
-        this.erro = 'Por favor, confirme seu e-mail para acessar a conta.';
-      } else {
-        this.erro = error?.message || 'Não foi possível fazer login. Tente novamente.';
-      }
-
+      this.erro = traduzirErro(error, 'Não foi possível fazer login. Verifique suas credenciais e tente novamente.');
     } finally {
       this.carregando = false;
     }
   }
 
+  async enviarLinkRecuperacao() {
+    this.erro = '';
+    this.sucesso = '';
+
+    const emailFormatado = this.emailEsqueci.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailFormatado || !emailRegex.test(emailFormatado)) {
+      this.erro = 'Informe um endereço de e-mail válido para a recuperação.';
+      return;
+    }
+
+    this.carregando = true;
+
+    try {
+      await this.supabaseService.redefinirSenha(emailFormatado);
+      this.sucesso = `Um link seguro para redefinição foi enviado para ${emailFormatado}. Verifique sua caixa de entrada e pasta de spam.`;
+    } catch (error: any) {
+      console.error('Erro ao enviar link de recuperação:', error);
+      this.erro = traduzirErro(error, 'Não foi possível enviar o link de recuperação. Tente novamente mais tarde.');
+    } finally {
+      this.carregando = false;
+    }
+  }
+
+
   irParaCadastro() {
     this.router.navigate(['/cadastro']);
   }
 
-}
+}

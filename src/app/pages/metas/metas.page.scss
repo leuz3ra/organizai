@@ -308,6 +308,24 @@ ion-content {
   flex-shrink: 0;
 }
 
+.btn-editar {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
+
+  ion-icon { font-size: 14px; color: var(--c-text-muted); transition: color var(--t-fast); }
+
+  &:hover { background: var(--c-accent-light); border-color: var(--c-accent-border); ion-icon { color: var(--c-accent); } }
+  &:active { transform: scale(0.9); }
+}
+
 .btn-excluir {
   width: 30px;
   height: 30px;

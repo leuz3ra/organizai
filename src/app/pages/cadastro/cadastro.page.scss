@@ -117,6 +117,8 @@ ion-content {
   border-radius: var(--r-2xl);
   padding: 32px 24px;
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.07);
+  contain: layout style;
+  transform: translateZ(0);
 
   @media (max-width: 420px) {
     padding: 24px 18px;
@@ -174,7 +176,7 @@ ion-content {
   background: var(--c-bg);
   border: 1.5px solid var(--c-border);
   border-radius: var(--r-md);
-  transition: all var(--t-base);
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
   overflow: hidden;
 
   &:focus-within {

@@ -69,7 +69,7 @@
 
   <!-- SEÇÃO DE PARCELAS AGRUPADAS NA MESMA CAIXA COM FORMA DE DIMINUIÇÃO (QUANDO NO FILTRO PARCELAS OU TODOS) -->
   <div class="parcelas-grid-caixas" *ngIf="(filtro === 'parcelado' || filtro === 'todos') && gruposParcelamento.length > 0">
-    <div class="parcela-caixa" *ngFor="let g of gruposParcelamento">
+    <div class="parcela-caixa" *ngFor="let g of gruposParcelamento; trackBy: trackByGrupo">
       <div class="p-caixa-header">
         <div class="p-caixa-title">
           <h4>{{ g.nome }}</h4>
@@ -77,9 +77,14 @@
             {{ g.temJuros ? (g.taxaJuros ? 'Com juros (' + g.taxaJuros + '%)' : 'Com juros') : 'Sem juros' }}
           </span>
         </div>
-        <button class="btn-caixa-del" (click)="iniciarExcluirGrupo(g, $event)" title="Excluir parcelas">
-          <ion-icon name="trash-outline"></ion-icon>
-        </button>
+        <div class="p-caixa-top-btns">
+          <button class="btn-caixa-edit" (click)="iniciarEditarGrupo(g, $event)" title="Editar parcelamento">
+            <ion-icon name="create-outline"></ion-icon>
+          </button>
+          <button class="btn-caixa-del" (click)="iniciarExcluirGrupo(g, $event)" title="Excluir parcelas">
+            <ion-icon name="trash-outline"></ion-icon>
+          </button>
+        </div>
       </div>
 
       <div class="p-caixa-mid">
@@ -115,7 +120,7 @@
 
   <!-- LISTA DE BOLETOS AVULSOS (OU FILTRADOS) -->
   <div class="lista" *ngIf="filtrados.length > 0 && filtro !== 'parcelado'">
-    <div class="boleto-card" *ngFor="let b of (filtro === 'todos' ? boletosAvulsos : filtrados)"
+    <div class="boleto-card" *ngFor="let b of (filtro === 'todos' ? boletosAvulsos : filtrados); trackBy: trackByBoleto"
          [class.pago]="b.status==='pago'"
          [class.vencido]="b.status==='vencido'">
       <div class="boleto-main" (click)="togglePago(b)">
@@ -147,9 +152,14 @@
           <strong class="boleto-valor" [class.valor-pago]="b.status==='pago'">{{ fmtMoeda(b.valor) }}</strong>
         </div>
       </div>
-      <button class="btn-del" (click)="iniciarExcluir(b, $event)" title="Excluir">
-        <ion-icon name="trash-outline"></ion-icon>
-      </button>
+      <div class="boleto-acoes">
+        <button class="btn-edit" (click)="iniciarEditar(b, $event)" title="Editar">
+          <ion-icon name="create-outline"></ion-icon>
+        </button>
+        <button class="btn-del" (click)="iniciarExcluir(b, $event)" title="Excluir">
+          <ion-icon name="trash-outline"></ion-icon>
+        </button>
+      </div>
     </div>
   </div>
   <div style="height:48px"></div>
@@ -159,7 +169,7 @@
     <div class="bottom-sheet" (click)="$event.stopPropagation()">
       <div class="bottom-sheet__handle"></div>
       <div class="bottom-sheet__header">
-        <h2>{{ novaForm.ehParcelado ? 'Nova Compra Parcelada' : 'Novo Boleto' }}</h2>
+        <h2>{{ (editandoId || editandoGrupoId) ? ('Editar ' + (editandoGrupoId ? 'Parcelamento' : 'Boleto')) : (novaForm.ehParcelado ? 'Nova Compra Parcelada' : 'Novo Boleto') }}</h2>
         <button (click)="fecharModal()"><ion-icon name="close-outline"></ion-icon></button>
       </div>
 
@@ -262,8 +272,8 @@
       <div class="bottom-sheet__footer">
         <button class="btn btn--secondary btn--md btn--full" (click)="fecharModal()">Cancelar</button>
         <button class="btn btn--primary btn--md btn--full" (click)="salvar()">
-          <ion-icon name="add-outline"></ion-icon>
-          {{ novaForm.ehParcelado ? 'Cadastrar Parcelas' : 'Adicionar Boleto' }}
+          <ion-icon [name]="(editandoId || editandoGrupoId) ? 'checkmark-circle-outline' : 'add-outline'"></ion-icon>
+          {{ (editandoId || editandoGrupoId) ? 'Salvar Alterações' : (novaForm.ehParcelado ? 'Cadastrar Parcelas' : 'Adicionar Boleto') }}
         </button>
       </div>
     </div>
