@@ -18,12 +18,23 @@ export function traduzirErro(error: any, fallbackPadrao = 'Ocorreu um imprevisto
 
   const rawCode = (error?.code || '').toLowerCase();
 
+  // 0. Erros internos do servidor / banco de dados (prioritários sobre fetch genérico)
+  if (
+    rawMsg.includes('database error') ||
+    rawMsg.includes('unexpected_failure') ||
+    rawMsg.includes('internal server error') ||
+    error?.status === 500
+  ) {
+    return 'O serviço está passando por uma oscilação momentânea no servidor. Por favor, tente novamente em instantes.';
+  }
+
   // 1. Falhas de conexão / rede / servidor indisponível
   if (
     rawMsg.includes('failed to fetch') ||
+    rawMsg.includes('fetch failed') ||
     rawMsg.includes('network') ||
-    rawMsg.includes('fetch') ||
     rawMsg.includes('load failed') ||
+    rawMsg.includes('net::err') ||
     rawMsg.includes('connection') ||
     rawMsg.includes('econnrefused') ||
     rawMsg.includes('timeout') ||

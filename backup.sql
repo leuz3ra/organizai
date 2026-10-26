@@ -21,6 +21,10 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Garante a coluna updated_at caso a tabela já existisse previamente
+ALTER TABLE public.profiles 
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL;
+
 -- Habilitar RLS na tabela profiles
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
@@ -59,6 +63,10 @@ CREATE INDEX IF NOT EXISTS idx_metas_created_at ON public.metas(created_at DESC)
 
 -- Habilitar RLS na tabela metas
 ALTER TABLE public.metas ENABLE ROW LEVEL SECURITY;
+
+-- Garante a coluna updated_at caso a tabela metas já existisse previamente
+ALTER TABLE public.metas 
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL;
 
 -- Políticas de segurança da tabela metas
 CREATE POLICY "Usuários podem visualizar suas próprias metas"
@@ -120,13 +128,18 @@ CREATE POLICY "Usuários podem excluir pagamentos em suas metas"
 -- Cria o registro na tabela profiles automaticamente após o signUp
 -- ============================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+SECURITY DEFINER 
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
 BEGIN
-  INSERT INTO public.profiles (id, nome, email)
+  INSERT INTO public.profiles (id, nome, email, updated_at)
   VALUES (
     new.id,
     COALESCE(new.raw_user_meta_data->>'nome', split_part(new.email, '@', 1)),
-    new.email
+    new.email,
+    timezone('utc'::text, now())
   )
   ON CONFLICT (id) DO UPDATE
   SET
@@ -135,7 +148,7 @@ BEGIN
     updated_at = timezone('utc'::text, now());
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Remove trigger antigo se existir para evitar duplicação
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
